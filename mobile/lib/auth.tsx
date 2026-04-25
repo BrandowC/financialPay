@@ -13,8 +13,6 @@ type Profile = {
   id: string;
   full_name: string;
   birth_date: string | null;
-  id_type: string | null;
-  id_number: string | null;
   phone_country_code: string | null;
   phone_number: string | null;
   credit_number: string;
@@ -34,16 +32,16 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, full_name, birth_date, id_type, id_number, phone_country_code, phone_number, credit_number'
+      'id, full_name, birth_date, phone_country_code, phone_number, credit_number'
     )
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.warn('[FinancialPay] No se pudo leer el perfil:', error.message);
     return null;
   }
-  return data as Profile;
+  return data as Profile | null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

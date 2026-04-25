@@ -14,12 +14,38 @@ import { useAuth } from '@/lib/auth';
 export default function AccountScreen() {
   const { profile, loading, signOut } = useAuth();
 
-  if (loading || !profile) {
+  if (loading) {
     return (
       <GradientBackground>
         <SafeAreaView style={styles.safe}>
           <View style={styles.loader}>
             <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        </SafeAreaView>
+      </GradientBackground>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <GradientBackground>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.loader}>
+            <Text style={styles.errorTitle}>No pudimos cargar tu perfil</Text>
+            <Text style={styles.errorText}>
+              Cierra sesión e intenta entrar de nuevo. Si el problema continúa,
+              avísale al administrador.
+            </Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.signOutButton,
+                pressed && styles.signOutPressed,
+                { marginTop: 24 },
+              ]}
+              onPress={signOut}
+            >
+              <Text style={styles.signOutText}>Cerrar sesión</Text>
+            </Pressable>
           </View>
         </SafeAreaView>
       </GradientBackground>
@@ -72,7 +98,20 @@ export default function AccountScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, padding: 24, paddingTop: 24 },
-  loader: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loader: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  errorTitle: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  errorText: {
+    color: '#B9CBEC',
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
   greetingWrap: { marginTop: 12, marginBottom: 24 },
   greeting: { color: '#B9CBEC', fontSize: 16 },
   name: {

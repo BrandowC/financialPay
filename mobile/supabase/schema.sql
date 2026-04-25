@@ -6,19 +6,16 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text not null,
   birth_date date,
-  id_type text,
-  id_number text,
   phone_country_code text,
   phone_number text,
   credit_number text not null,
   created_at timestamptz not null default now()
 );
 
--- 2) Por si la tabla ya existía sin los campos nuevos, los agregamos
-alter table public.profiles add column if not exists id_type text;
-alter table public.profiles add column if not exists id_number text;
-alter table public.profiles add column if not exists phone_country_code text;
-alter table public.profiles add column if not exists phone_number text;
+-- 2) Si la tabla existía sin birth_date, lo agregamos. Si tenía cédula, la quitamos.
+alter table public.profiles add column if not exists birth_date date;
+alter table public.profiles drop column if exists id_type;
+alter table public.profiles drop column if exists id_number;
 
 -- 3) Función que genera un número de crédito aleatorio (16 dígitos, 4 bloques)
 create or replace function public.generate_credit_number()
@@ -46,8 +43,6 @@ begin
     id,
     full_name,
     birth_date,
-    id_type,
-    id_number,
     phone_country_code,
     phone_number,
     credit_number
@@ -56,15 +51,12 @@ begin
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     nullif(new.raw_user_meta_data->>'birth_date', '')::date,
-    new.raw_user_meta_data->>'id_type',
-    new.raw_user_meta_data->>'id_number',
     new.raw_user_meta_data->>'phone_country_code',
     new.raw_user_meta_data->>'phone_number',
     public.generate_credit_number()
   );
   return new;
 exception when others then
-  -- Si algo falla, no bloqueamos el signup; queda el log
   raise warning '[FinancialPay] No se pudo crear el perfil para %: %', new.id, sqlerrm;
   return new;
 end;
@@ -94,7 +86,6 @@ create policy "profiles_update_own"
   using (auth.uid() = id);
 
 -- 6) Función auxiliar para normalizar texto (sin tildes, sin mayúsculas, espacios colapsados)
--- No usa extensiones; solo translate() y lower() de Postgres.
 create or replace function public.normalize_name(input text)
 returns text
 language sql
@@ -107,7 +98,9 @@ as $$
   );
 $$;
 
--- 7) Función para buscar email por cédula o nombre (usada en login)
+-- 7) Función para buscar email por nombre (usada en login)
+-- Solo encuentra el email si hay UN único usuario con ese nombre.
+-- Si hay duplicados, devuelve null para evitar entrar a la cuenta equivocada.
 create or replace function public.lookup_email(input text)
 returns text
 language plpgsql
@@ -125,17 +118,6 @@ begin
     return null;
   end if;
 
-  -- Si solo dígitos -> búsqueda por cédula
-  if trimmed ~ '^[0-9]+$' then
-    select u.email into found_email
-    from auth.users u
-    join public.profiles p on p.id = u.id
-    where p.id_number = trimmed
-    limit 1;
-    return found_email;
-  end if;
-
-  -- Si es texto -> búsqueda por nombre normalizado
   normalized := public.normalize_name(trimmed);
 
   select count(*) into matches_count
@@ -156,3 +138,17 @@ $$;
 
 grant execute on function public.normalize_name(text) to anon, authenticated;
 grant execute on function public.lookup_email(text) to anon, authenticated;
+
+-- 8) Crear perfiles para usuarios huérfanos (auth.users sin perfil)
+-- Esto pasa cuando el trigger falla silenciosamente. Se basa en raw_user_meta_data.
+insert into public.profiles (id, full_name, birth_date, phone_country_code, phone_number, credit_number)
+select
+  u.id,
+  coalesce(u.raw_user_meta_data->>'full_name', split_part(u.email, '@', 1)),
+  nullif(u.raw_user_meta_data->>'birth_date', '')::date,
+  u.raw_user_meta_data->>'phone_country_code',
+  u.raw_user_meta_data->>'phone_number',
+  public.generate_credit_number()
+from auth.users u
+left join public.profiles p on p.id = u.id
+where p.id is null;

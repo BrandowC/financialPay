@@ -17,26 +17,14 @@ import { GradientBackground } from '@/components/GradientBackground';
 import { BrandHeader } from '@/components/BrandHeader';
 import { Select, type SelectOption } from '@/components/Select';
 import {
-  COUNTRIES,
-  ID_TYPES,
   MONTHS,
   YEARS,
   daysInMonth,
+  US_FLAG,
+  US_DIAL_CODE,
+  US_PHONE_DIGITS,
 } from '@/lib/constants';
 import { supabase, isNetworkError } from '@/lib/supabase';
-
-const ID_TYPE_OPTIONS: SelectOption[] = ID_TYPES.map((t) => ({
-  value: t.code,
-  label: t.label,
-  hint: t.code,
-}));
-
-const COUNTRY_OPTIONS: SelectOption[] = COUNTRIES.map((c) => ({
-  value: c.code,
-  label: `${c.flag}  ${c.name}`,
-  displayLabel: `${c.flag} ${c.dialCode}`,
-  hint: c.dialCode,
-}));
 
 const MONTH_OPTIONS: SelectOption[] = MONTHS.map((name, i) => ({
   value: String(i + 1),
@@ -54,8 +42,6 @@ function pad2(n: number | string) {
 
 type Errors = Partial<Record<
   | 'fullName'
-  | 'idType'
-  | 'idNumber'
   | 'date'
   | 'phone'
   | 'email'
@@ -68,12 +54,9 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   const [fullName, setFullName] = useState('');
-  const [idType, setIdType] = useState<string | null>('CC');
-  const [idNumber, setIdNumber] = useState('');
   const [day, setDay] = useState<string | null>(null);
   const [month, setMonth] = useState<string | null>(null);
   const [year, setYear] = useState<string | null>(null);
-  const [countryCode, setCountryCode] = useState<string | null>('CO');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -90,8 +73,6 @@ export default function RegisterScreen() {
     }));
   }, [month, year]);
 
-  const country = COUNTRIES.find((c) => c.code === countryCode);
-
   function clearError(key: keyof Errors) {
     if (errors[key] || errors.general) {
       setErrors((prev) => {
@@ -107,12 +88,11 @@ export default function RegisterScreen() {
     const newErrors: Errors = {};
 
     if (!fullName.trim()) newErrors.fullName = 'Escribe tu nombre completo.';
-    if (!idType) newErrors.idType = 'Selecciona el tipo.';
-    if (!idNumber.trim()) newErrors.idNumber = 'Escribe el número.';
     if (!day || !month || !year) newErrors.date = 'Completa día, mes y año.';
-    if (!country) newErrors.phone = 'Selecciona país.';
-    else if (!phone.trim() || phone.replace(/\D/g, '').length < 7)
-      newErrors.phone = 'Número de celular inválido.';
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (!phoneDigits) newErrors.phone = 'Escribe tu número de celular.';
+    else if (phoneDigits.length !== US_PHONE_DIGITS)
+      newErrors.phone = 'Solo aceptamos números de Estados Unidos (10 dígitos).';
     if (!email.trim()) newErrors.email = 'Escribe tu correo.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       newErrors.email = 'Correo no válido.';
@@ -140,10 +120,8 @@ export default function RegisterScreen() {
           data: {
             full_name: fullName.trim(),
             birth_date: birthDate,
-            id_type: idType,
-            id_number: idNumber.trim(),
-            phone_country_code: country!.dialCode,
-            phone_number: phone.trim(),
+            phone_country_code: US_DIAL_CODE,
+            phone_number: phoneDigits,
           },
         },
       });
@@ -227,43 +205,6 @@ export default function RegisterScreen() {
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(150).duration(500)}>
-              <Field
-                label="Documento"
-                error={errors.idType ?? errors.idNumber}
-              >
-                <View style={styles.row}>
-                  <Select
-                    value={idType}
-                    onChange={(v) => {
-                      setIdType(v);
-                      clearError('idType');
-                    }}
-                    options={ID_TYPE_OPTIONS}
-                    placeholder="Tipo"
-                    title="Tipo de documento"
-                    hasError={!!errors.idType}
-                    containerStyle={styles.docType}
-                  />
-                  <TextInput
-                    style={[
-                      styles.input,
-                      styles.docNumber,
-                      errors.idNumber && styles.inputError,
-                    ]}
-                    placeholder="Número"
-                    placeholderTextColor="#8aa0c4"
-                    keyboardType="number-pad"
-                    value={idNumber}
-                    onChangeText={(t) => {
-                      setIdNumber(t.replace(/[^\d]/g, ''));
-                      clearError('idNumber');
-                    }}
-                  />
-                </View>
-              </Field>
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(200).duration(500)}>
               <Field label="Fecha de nacimiento" error={errors.date}>
                 <View style={styles.row}>
                   <Select
@@ -312,33 +253,27 @@ export default function RegisterScreen() {
               </Field>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(250).duration(500)}>
-              <Field label="Celular" error={errors.phone}>
+            <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+              <Field label="Celular (Estados Unidos)" error={errors.phone}>
                 <View style={styles.row}>
-                  <Select
-                    value={countryCode}
-                    onChange={(v) => {
-                      setCountryCode(v);
-                      clearError('phone');
-                    }}
-                    options={COUNTRY_OPTIONS}
-                    placeholder="🇨🇴 +57"
-                    title="País"
-                    hasError={!!errors.phone}
-                    containerStyle={styles.country}
-                  />
+                  <View style={styles.fixedCountry}>
+                    <Text style={styles.fixedCountryText}>
+                      {US_FLAG} {US_DIAL_CODE}
+                    </Text>
+                  </View>
                   <TextInput
                     style={[
                       styles.input,
                       styles.phoneInput,
                       errors.phone && styles.inputError,
                     ]}
-                    placeholder="3001234567"
+                    placeholder="3015551234"
                     placeholderTextColor="#8aa0c4"
                     keyboardType="phone-pad"
+                    maxLength={US_PHONE_DIGITS}
                     value={phone}
                     onChangeText={(t) => {
-                      setPhone(t.replace(/[^\d]/g, ''));
+                      setPhone(t.replace(/[^\d]/g, '').slice(0, US_PHONE_DIGITS));
                       clearError('phone');
                     }}
                   />
@@ -346,7 +281,7 @@ export default function RegisterScreen() {
               </Field>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(300).duration(500)}>
+            <Animated.View entering={FadeInDown.delay(250).duration(500)}>
               <Field label="Correo electrónico" error={errors.email}>
                 <TextInput
                   style={[styles.input, errors.email && styles.inputError]}
@@ -364,7 +299,7 @@ export default function RegisterScreen() {
               </Field>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(350).duration(500)}>
+            <Animated.View entering={FadeInDown.delay(300).duration(500)}>
               <Field label="Contraseña" error={errors.password}>
                 <TextInput
                   style={[styles.input, errors.password && styles.inputError]}
@@ -380,7 +315,7 @@ export default function RegisterScreen() {
               </Field>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(400).duration(500)}>
+            <Animated.View entering={FadeInDown.delay(350).duration(500)}>
               <Pressable
                 style={({ pressed }) => [
                   styles.primaryButton,
@@ -462,9 +397,21 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
   cell: { flex: 1, minHeight: 50 },
   cellWide: { flex: 1.5, minHeight: 50 },
-  docType: { flex: 1, minHeight: 50 },
-  docNumber: { flex: 1.4 },
-  country: { width: 110, minHeight: 50 },
+  fixedCountry: {
+    width: 100,
+    minHeight: 50,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  fixedCountryText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   phoneInput: { flex: 1 },
   primaryButton: {
     backgroundColor: '#0B5FFF',

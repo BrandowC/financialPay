@@ -11,10 +11,11 @@ export function GradientBackground({ children, style }: Props) {
   return (
     <View style={[styles.container, style]}>
       <LinearGradient
-        colors={['#050E2C', '#0B2A6B', '#1E40AF']}
+        // arriba: azul oscuro · medio: azul intermedio · abajo: azul más claro
+        colors={['#0A1A4D', '#1538A8', '#3B82F6']}
         locations={[0, 0.55, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       {children}

@@ -1,8 +1,6 @@
 import 'react-native-url-polyfill/auto';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 
 const extra = (Constants.expoConfig?.extra ?? {}) as {
   supabaseUrl?: string;
@@ -20,10 +18,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-const isBrowser =
-  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
-
-// fetch con timeout largo (30s) para tolerar redes lentas
 const REQUEST_TIMEOUT_MS = 30000;
 
 const fetchWithTimeout: typeof fetch = (input, init) => {
@@ -36,9 +30,9 @@ const fetchWithTimeout: typeof fetch = (input, init) => {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: Platform.OS === 'web' ? (isBrowser ? undefined : undefined) : AsyncStorage,
+    // Sin persistencia: al cerrar la app se pierde la sesión y el usuario vuelve al welcome.
+    persistSession: false,
     autoRefreshToken: true,
-    persistSession: Platform.OS !== 'web' || isBrowser,
     detectSessionInUrl: false,
   },
   global: {

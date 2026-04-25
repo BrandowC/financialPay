@@ -16,11 +16,11 @@ import { GradientBackground } from '@/components/GradientBackground';
 import { BrandHeader } from '@/components/BrandHeader';
 import { supabase, isNetworkError } from '@/lib/supabase';
 
-type Errors = Partial<Record<'identifier' | 'password' | 'general', string>>;
+type Errors = Partial<Record<'fullName' | 'password' | 'general', string>>;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState('');
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
@@ -38,7 +38,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     const newErrors: Errors = {};
-    if (!identifier.trim()) newErrors.identifier = 'Escribe tu cédula o nombre.';
+    if (!fullName.trim()) newErrors.fullName = 'Escribe tu nombre completo.';
     if (!password) newErrors.password = 'Escribe tu contraseña.';
 
     if (Object.keys(newErrors).length > 0) {
@@ -52,18 +52,16 @@ export default function LoginScreen() {
     try {
       const { data: emailData, error: lookupError } = await supabase.rpc(
         'lookup_email',
-        { input: identifier.trim() }
+        { input: fullName.trim() }
       );
 
       if (lookupError) {
         setSubmitting(false);
         console.warn('[FinancialPay] lookup error:', lookupError);
-        const detail =
-          (lookupError as { message?: string })?.message ?? 'sin detalle';
         setErrors({
           general: isNetworkError(lookupError)
             ? 'Sin conexión o internet muy lento. Revisa tu Wi-Fi y vuelve a intentar.'
-            : `Error de Supabase: ${detail}`,
+            : 'Error al buscar tu cuenta. Intenta de nuevo.',
         });
         return;
       }
@@ -72,7 +70,7 @@ export default function LoginScreen() {
         setSubmitting(false);
         setErrors({
           general:
-            'No encontramos una cuenta con esa cédula o nombre. Verifica e intenta de nuevo.',
+            'No encontramos una cuenta con ese nombre. Verifica que esté escrito igual que cuando te registraste.',
         });
         return;
       }
@@ -89,7 +87,7 @@ export default function LoginScreen() {
         setErrors({
           general: isNetworkError(error)
             ? 'Sin conexión o internet muy lento. Revisa tu Wi-Fi y vuelve a intentar.'
-            : 'Cédula/nombre o contraseña incorrectos.',
+            : 'Nombre o contraseña incorrectos.',
         });
         return;
       }
@@ -132,24 +130,24 @@ export default function LoginScreen() {
 
             <Animated.View entering={FadeInDown.delay(150).duration(500)}>
               <View style={styles.field}>
-                <Text style={styles.label}>Cédula o nombre</Text>
+                <Text style={styles.label}>Nombre completo</Text>
                 <TextInput
                   style={[
                     styles.input,
-                    (errors.identifier || errors.general) && styles.inputError,
+                    (errors.fullName || errors.general) && styles.inputError,
                   ]}
-                  placeholder="123456789 o Juan Pérez"
+                  placeholder="Juan Pérez"
                   placeholderTextColor="#8aa0c4"
                   autoCapitalize="words"
                   autoCorrect={false}
-                  value={identifier}
+                  value={fullName}
                   onChangeText={(t) => {
-                    setIdentifier(t);
-                    clearError('identifier');
+                    setFullName(t);
+                    clearError('fullName');
                   }}
                 />
-                {errors.identifier ? (
-                  <Text style={styles.errorText}>{errors.identifier}</Text>
+                {errors.fullName ? (
+                  <Text style={styles.errorText}>{errors.fullName}</Text>
                 ) : null}
               </View>
             </Animated.View>
