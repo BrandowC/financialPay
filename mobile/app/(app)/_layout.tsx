@@ -2,9 +2,9 @@ import { Redirect, Stack, type Href } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 
 export default function AppLayout() {
-  const { session, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
-  if (!loading && !session) {
+  if (!loading && !isAuthenticated) {
     return <Redirect href={'/welcome' as Href} />;
   }
 

@@ -1,27 +1,23 @@
-# FinancialPay — App móvil (Expo + Supabase)
+# AM Cuenta — App móvil (Expo)
 
-App móvil sencilla con 3 pantallas: **Login**, **Registro** y **Cuenta** (estática con saldo en cero).
+App móvil con 4 pantallas: **Bienvenida**, **Login**, **Registro** y **Cuenta** (solo lectura: el cliente ve su saldo, no puede modificarlo).
 
 ## Qué hace
 
-1. **Registro**: correo, contraseña, nombre completo y fecha de nacimiento. Se crea el usuario en Supabase Auth y un perfil en la tabla `profiles` con un número de crédito aleatorio (16 dígitos, 4 bloques).
-2. **Login**: correo + contraseña.
-3. **Cuenta**: muestra `FinancialPay`, el nombre del usuario, el número de crédito y **$0.00 USD** como saldo (estático por ahora).
+1. **Registro**: nombre completo, fecha de nacimiento (18+), celular de EE. UU. y contraseña (mínimo 8 caracteres).
+2. **Login**: con nombre completo o correo + contraseña.
+3. **Cuenta**: nombre, número de cuenta (`AMC-XXXXXXXX`) y el saldo — el mismo valor que un administrador edita desde el panel web. El saldo se anima al entrar y se puede refrescar deslizando hacia abajo.
+4. **Eliminar cuenta**: borra el usuario y todos sus datos de forma permanente (requisito de Google Play desde 2024).
 
-Todo está respaldado por **Supabase** (Auth + Postgres). Sin backend propio.
+Todo esto ya **NO** usa Supabase. El backend es la API propia en `../api/` (NestJS + PostgreSQL) — ver el README del monorepo. La app solo habla HTTP con esa API.
 
 ---
 
 ## Setup rápido (primera vez)
 
-### 1. Configurar Supabase
+### 1. Levantar el backend
 
-1. Ve a tu proyecto en https://app.supabase.com
-2. Abre **SQL Editor → New query**, pega el contenido de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**. Esto crea la tabla `profiles` y las políticas RLS.
-3. Ve a **Project Settings → API** y copia:
-   - **Project URL** → va en `EXPO_PUBLIC_SUPABASE_URL`
-   - **anon public key** → va en `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-4. (Opcional, recomendado para probar rápido) En **Authentication → Providers → Email**, desactiva *"Confirm email"* mientras desarrollas, así los usuarios pueden entrar de inmediato sin esperar correo.
+Sigue el README de `../api/` primero: base de datos con Docker, migraciones, y `npm run start:dev`. La API debe quedar escuchando (por defecto) en `http://localhost:3000/api/v1`.
 
 ### 2. Variables de entorno
 
@@ -29,12 +25,12 @@ Todo está respaldado por **Supabase** (Auth + Postgres). Sin backend propio.
 cp .env.example .env
 ```
 
-Abre `.env` y pega los valores reales.
+Por defecto apunta a `http://localhost:3000/api/v1`. Si pruebas desde un **celular físico** o un emulador, `localhost` no resuelve a tu PC: cambia esa URL por la IP de tu red local, por ejemplo `http://192.168.1.10:3000/api/v1`.
 
 ### 3. Instalar e iniciar
 
 ```bash
-npm install        # ya hecho si acabas de crear el proyecto
+npm install
 npx expo start
 ```
 
@@ -47,53 +43,45 @@ Se abrirá Metro con un QR. En tu celular:
 
 ---
 
-## Ver registros en Supabase
-
-- **Usuarios**: Supabase → **Authentication → Users**
-- **Perfiles (nombre, fecha, número de crédito)**: Supabase → **Table Editor → profiles**
-
----
-
 ## Estructura del proyecto
 
 ```
 mobile/
 ├── app/
-│   ├── _layout.tsx          ← Layout raíz + AuthProvider
+│   ├── _layout.tsx          ← Layout raíz + AuthProvider + LanguageProvider
 │   ├── index.tsx            ← Redirige según sesión
+│   ├── welcome.tsx          ← Pantalla de bienvenida
 │   ├── (auth)/
 │   │   ├── _layout.tsx      ← Bloquea si ya hay sesión
 │   │   ├── login.tsx
 │   │   └── register.tsx
 │   └── (app)/
 │       ├── _layout.tsx      ← Bloquea si no hay sesión
-│       └── account.tsx      ← Pantalla estática
+│       └── account.tsx      ← Saldo de solo lectura, animado
+├── components/
+│   ├── ui/                  ← Button, TextField, AnimatedBalance, PasswordStrengthMeter
+│   ├── GradientBackground.tsx
+│   ├── BrandHeader.tsx
+│   ├── LanguageToggle.tsx
+│   └── Select.tsx
 ├── lib/
-│   ├── supabase.ts          ← Cliente Supabase
-│   └── auth.tsx             ← Context de sesión + perfil
-├── supabase/
-│   └── schema.sql           ← Ejecutar en Supabase (1 vez)
+│   ├── theme.ts             ← Colores, tipografía, espaciados — un solo lugar
+│   ├── api.ts                ← Cliente HTTP: login/registro/refresh automático
+│   ├── secure-storage.ts    ← Refresh token cifrado (Keychain/Keystore)
+│   ├── auth.tsx              ← Context de sesión + perfil
+│   ├── error-messages.ts    ← Traduce códigos de error de la API a texto local
+│   ├── i18n.tsx              ← Español/Inglés
+│   └── constants.ts          ← Reglas de edad, teléfono, etc.
 ├── .env.example
-└── app.json                 ← name: FinancialPay, package: com.financialpay.app
+└── app.json
 ```
 
 ---
 
-## Publicar en Play Store (cuando esté listo)
+## Publicar en Play Store
 
-1. Crea cuenta en https://expo.dev (gratis) y en Play Console ($25 USD una sola vez).
-2. Instala EAS: `npm install -g eas-cli`
-3. `eas login` y `eas build:configure`
-4. Build de producción: `eas build -p android --profile production`
-5. Sube el `.aab` resultante a Play Console.
+Toda la checklist y los textos ya redactados están en [`playstore/`](playstore/README.md). Antes de generar el build de producción, actualiza la URL de la API en `eas.json` (`build.production.env.EXPO_PUBLIC_API_URL`) para que apunte al servidor real, no a `localhost`.
 
-El `package` ya está configurado como `com.financialpay.app` en `app.json` — cámbialo si necesitas otro.
-
----
-
-## Cambiar el nombre de la app
-
-Todo lo que necesitas tocar:
-
-- `app.json` → `expo.name`, `expo.slug`, `expo.scheme`, `expo.android.package`
-- Textos en las 3 pantallas (`login.tsx`, `register.tsx`, `account.tsx`): buscar `FinancialPay`
+```bash
+eas build -p android --profile production
+```

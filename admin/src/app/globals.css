@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-surface-50 text-brand-950;
+  }
+
+  /* Scrollbar discreto: la tabla de clientes puede tener cientos de filas
+     visibles a la vez y un scrollbar por defecto se ve tosco al lado del
+     resto del diseño. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: theme('colors.brand.700 / 25%');
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: theme('colors.brand.700 / 45%');
+  }
+}
+
+@layer utilities {
+  /* Fondo shimmer para los esqueletos de carga: da la sensación de "algo se
+     está cargando" en vez de un gris plano estático. */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      theme('colors.surface.100') 25%,
+      theme('colors.surface.200') 37%,
+      theme('colors.surface.100') 63%
+    );
+    background-size: 400% 100%;
+    @apply animate-shimmer;
+  }
+}

@@ -1,25 +1,24 @@
 {
   "expo": {
-    "name": "FinancialPay",
-    "slug": "financialpay",
-    "version": "1.0.0",
+    "name": "AM Cuenta",
+    "slug": "am-financial",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "financialpay",
+    "scheme": "amfinancial",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.amfinancial.app"
     },
     "android": {
-      "package": "com.financialpay.app",
+      "package": "com.amfinancial.app",
       "adaptiveIcon": {
         "backgroundColor": "#0B5FFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -40,11 +39,23 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-font",
+      "expo-web-browser",
+      "expo-secure-store",
+      "expo-image",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1e9d3109-e133-4f6a-83e9-02270734a634"
+      }
+    },
+    "owner": "gregorioaz"
   }
 }

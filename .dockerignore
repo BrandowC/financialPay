@@ -1,0 +1,27 @@
+# Contexto de build = raíz del monorepo (ver Dockerfile). Todo lo que no
+# hace falta para compilar api/ + admin/ se excluye para que el build sea
+# rápido y no se cuelen secretos locales en la imagen.
+
+# No participa de esta imagen: se compila y publica aparte (EAS Build).
+mobile/
+
+infra/
+docs/
+.git
+
+# api/
+api/node_modules
+api/dist
+api/.env
+api/.env.*
+!api/.env.example
+api/*.log
+api/coverage
+
+# admin/
+admin/node_modules
+admin/.next
+admin/out
+admin/.env.local
+admin/.env.*
+!admin/.env.example

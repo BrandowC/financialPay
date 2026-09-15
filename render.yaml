@@ -1,0 +1,128 @@
+# Blueprint de Render para AM Cuenta.
+#
+# Un solo Web Service (API + panel administrativo, ver Dockerfile en la raíz)
+# más una base de datos Postgres, administrados por Render. La app móvil
+# (mobile/) NO se despliega aquí — se publica por separado en Google Play
+# (ver mobile/playstore/README.md).
+#
+# Sin Redis a propósito: para arrancar (una sola instancia del web service) el
+# rate limiting en memoria de ThrottlerModule alcanza igual — ver el comentario
+# en api/src/app.module.ts y docs/escalabilidad.md. Si el día de mañana se
+# corren varias instancias, ahí sí hace falta un Redis compartido para que el
+# límite sea global y no se multiplique por instancia.
+#
+# Plan de Postgres en "free": ideal para arrancar sin costo, pero el plan
+# gratuito de Render tiene límites de almacenamiento y puede eliminarse tras
+# un período de inactividad — revisa los términos vigentes en Render antes de
+# confiarle datos reales de clientes a largo plazo. Subir a "starter" cuando
+# el negocio lo justifique es un cambio de una sola línea aquí.
+#
+# Uso: en Render, "New +" → "Blueprint", conectar este repositorio. Render lee
+# este archivo y crea los dos recursos de una vez. Las variables marcadas
+# `sync: false` no se rellenan solas — hay que ponerlas a mano en el panel de
+# Render después de crear el Blueprint (nunca deben ir committeadas al repo).
+
+databases:
+  - name: amcuenta-postgres
+    plan: free
+    databaseName: amcuenta
+    user: amcuenta
+
+services:
+  - type: web
+    name: amcuenta-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Plan "free": $0/mes, pero Render duerme el servicio tras 15 min sin
+    # tráfico y la siguiente petición tarda 30-60s en despertar. Aceptable
+    # para arrancar; subir a "starter" (~$7/mes) cuando eso ya no sea
+    # aceptable para los usuarios reales es cambiar solo esta línea.
+    plan: free
+    healthCheckPath: /health/live
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_PREFIX
+        value: api/v1
+
+      # ── Base de datos ────────────────────────────────────────────────────
+      - key: DATABASE_URL
+        fromDatabase:
+          name: amcuenta-postgres
+          property: connectionString
+      - key: DATABASE_POOL_SIZE
+        value: 15
+      - key: DATABASE_STATEMENT_TIMEOUT_MS
+        value: 15000
+
+      # ── Autenticación — generar con: openssl rand -base64 48 ─────────────
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
+      - key: JWT_ISSUER
+        value: am-cuenta-api
+      - key: AUTH_MAX_FAILED_ATTEMPTS
+        value: 5
+      - key: AUTH_LOCKOUT_MINUTES
+        value: 15
+
+      # REDIS_URL deliberadamente omitida — ver nota sobre Redis arriba.
+
+      # ── Google Sheets (opcional, ver docs/google-sheets.md) ──────────────
+      - key: GOOGLE_SHEETS_ENABLED
+        value: false
+      - key: GOOGLE_SHEETS_SPREADSHEET_ID
+        sync: false
+      - key: GOOGLE_SHEETS_TAB_NAME
+        value: Registros
+      - key: GOOGLE_SERVICE_ACCOUNT_EMAIL
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+        sync: false
+
+      # ── Outbox (sincronización asíncrona) ─────────────────────────────────
+      - key: OUTBOX_ENABLED
+        value: true
+      - key: OUTBOX_POLL_INTERVAL_MS
+        value: 5000
+      - key: OUTBOX_BATCH_SIZE
+        value: 50
+
+      # ── CORS ───────────────────────────────────────────────────────────────
+      # IMPORTANTE: aunque el panel comparte origen con esta API, el navegador
+      # igual manda cabecera Origin en cada POST/PATCH/DELETE del panel — así
+      # que el propio dominio de este servicio de Render (ej:
+      # https://amcuenta-api.onrender.com) TIENE que estar en esta lista, o el
+      # panel se autobloquea al iniciar sesión. NO puede contener "*" ni
+      # "localhost": el esquema de entorno rechaza el arranque en producción
+      # si lo hace.
+      - key: CORS_ORIGINS
+        sync: false
+
+      # ── Rate limiting ──────────────────────────────────────────────────────
+      - key: THROTTLE_TTL_SECONDS
+        value: 60
+      - key: THROTTLE_LIMIT
+        value: 100
+      - key: LOG_LEVEL
+        value: info
+
+      # ── Administrador sembrado (ver api/prisma/seed.ts) ──────────────────
+      # El Dockerfile solo corre `prisma migrate deploy` al arrancar — el
+      # seed del primer administrador es un paso manual, una sola vez, desde
+      # la pestaña "Shell" del servicio en Render: `npm run db:seed`. Con
+      # estas variables ya puestas aquí, ese comando crea exactamente un
+      # administrador. Cambia la contraseña real después de ese primer
+      # login; estas variables no vuelven a tener efecto una vez existe uno.
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_ADMIN_NAME
+        sync: false

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidad - AM Cuenta</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #ffffff;
+  }
+  h1 {
+    color: #15233F;
+    border-bottom: 3px solid #C9A961;
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+  }
+  h2 {
+    color: #15233F;
+    margin-top: 32px;
+    border-left: 4px solid #C9A961;
+    padding-left: 12px;
+  }
+  .updated { color: #555; font-size: 14px; margin-bottom: 32px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 28px; }
+  .badge {
+    font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+    background: #F1F4FA; color: #15233F; border: 1px solid #DCE3F0;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e5e5; }
+  th { color: #555; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+  a { color: #15233F; }
+  .contact {
+    background: #F7F9FC; border: 1px solid #DCE3F0; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e5e5e5; color: #888; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>Política de Privacidad — AM Cuenta</h1>
+<p class="updated">Última actualización: 4 de septiembre de 2026</p>
+
+<div class="badges">
+  <span class="badge">No es un banco</span>
+  <span class="badge">No otorga créditos</span>
+  <span class="badge">No procesa pagos</span>
+  <span class="badge">Cifrado en tránsito</span>
+  <span class="badge">Eliminación de cuenta desde la app</span>
+</div>
+
+<p>Esta Política de Privacidad describe cómo <strong>AM Cuenta</strong> ("la Aplicación", "nosotros") recolecta, usa y protege la información de los usuarios cuando utilizan nuestra aplicación móvil.</p>
+
+<h2>1. Qué es AM Cuenta</h2>
+<p><strong>AM Cuenta es una aplicación de gestión de cuenta y consulta de saldo interno.</strong> El valor que se muestra en la pantalla de cuenta es un dato administrativo que el equipo de AM Cuenta gestiona manualmente para cada usuario; no representa fondos bancarios, no puede transferirse, retirarse, cambiarse por dinero ni usarse como medio de pago.</p>
+<p><strong>AM Cuenta NO es un banco, NO es una entidad financiera, NO otorga créditos ni préstamos, NO procesa pagos ni transacciones de ningún tipo</strong>, y no está afiliada a ninguna institución bancaria real. El número de cuenta (formato <code>AMC-XXXXXXXX</code>) es un identificador interno de la aplicación, no un número de cuenta bancaria ni de tarjeta.</p>
+
+<h2>2. Información que recolectamos</h2>
+<table>
+  <tr><th>Dato</th><th>Para qué</th></tr>
+  <tr><td>Nombre completo</td><td>Identificar al usuario dentro de la app</td></tr>
+  <tr><td>Correo electrónico</td><td>Identificador de cuenta y autenticación</td></tr>
+  <tr><td>Contraseña</td><td>Nunca en texto plano — protegida con Argon2id</td></tr>
+  <tr><td>Fecha de nacimiento</td><td>Verificar que el usuario es mayor de 18 años</td></tr>
+  <tr><td>Celular (EE. UU.)</td><td>Identificación de contacto</td></tr>
+</table>
+<p>No recolectamos ubicación, contactos, fotos, micrófono, cámara, ni ningún otro dato del dispositivo. No usamos identificadores de publicidad ni SDKs de rastreo de terceros.</p>
+
+<h2>3. Cómo usamos la información</h2>
+<ul>
+  <li>Crear y administrar la cuenta del usuario dentro de la aplicación.</li>
+  <li>Autenticar al usuario al iniciar sesión.</li>
+  <li>Mostrar el perfil y el valor de cuenta dentro de la app.</li>
+  <li>Mantener un registro administrativo interno del negocio, accesible solo por personal autorizado mediante un panel protegido con usuario y contraseña.</li>
+</ul>
+<p><strong>No vendemos, alquilamos ni compartimos los datos con terceros con fines de publicidad o marketing.</strong> No mostramos anuncios de ningún tipo.</p>
+
+<h2>4. Almacenamiento y seguridad</h2>
+<p>Los datos se almacenan en una base de datos PostgreSQL operada por AM Cuenta, alojada en infraestructura en la nube.</p>
+<ul>
+  <li>Toda la comunicación entre la app y los servidores está cifrada en tránsito mediante HTTPS/TLS.</li>
+  <li>Las contraseñas se protegen con <strong>Argon2id</strong>, diseñado para resistir ataques de fuerza bruta.</li>
+  <li>Cada sesión usa tokens de corta duración renovados automáticamente; el dispositivo nunca guarda la contraseña, solo una credencial cifrada por el sistema operativo.</li>
+  <li>Todo cambio al valor de cuenta de un usuario queda registrado de forma permanente e inmutable, como control interno y trazabilidad.</li>
+</ul>
+
+<h2>5. Servicios de terceros</h2>
+<ul>
+  <li><strong>Expo (Expo Application Services)</strong> — compilación y distribución de la app. <a href="https://expo.dev/privacy" target="_blank" rel="noopener">Política de privacidad</a>.</li>
+  <li><strong>Proveedor de infraestructura en la nube</strong> donde se aloja la base de datos y el servidor.</li>
+  <li><strong>Google Sheets (uso interno, opcional)</strong> — copia privada de los registros de clientes para respaldo administrativo del negocio; no es pública ni se comparte con nadie fuera del equipo. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Política de privacidad de Google</a>.</li>
+</ul>
+
+<h2>6. Derechos del usuario</h2>
+<ul>
+  <li><strong>Acceder</strong> a tus datos desde la pantalla "Mi Cuenta" en la app.</li>
+  <li><strong>Eliminar tu cuenta</strong> y todos tus datos, directamente desde la app, con el botón "Eliminar mi cuenta". La eliminación es inmediata y permanente.</li>
+  <li>Solicitar la eliminación por correo electrónico, si lo prefieres.</li>
+</ul>
+<p>Una vez eliminada la cuenta, los datos no se pueden recuperar.</p>
+
+<h2>7. Menores de edad</h2>
+<p>La aplicación <strong>requiere que el usuario tenga 18 años o más</strong> para registrarse; la fecha de nacimiento se verifica en el registro y las cuentas de menores son rechazadas automáticamente.</p>
+
+<h2>8. Contacto</h2>
+<div class="contact">
+  <p>Para preguntas sobre esta política, solicitudes de eliminación de cuenta o ejercicio de tus derechos:</p>
+  <p><strong><a href="mailto:fronterayaite@gmail.com">fronterayaite@gmail.com</a></strong></p>
+</div>
+
+<h2>9. Cambios a esta política</h2>
+<p>Esta política puede actualizarse ocasionalmente. La fecha de "última actualización" arriba indica la versión vigente.</p>
+
+<h2>10. Jurisdicción</h2>
+<p>Esta política se rige por las leyes aplicables al lugar donde se publique y distribuya la aplicación.</p>
+
+<footer>© 2026 AM Cuenta — Solutions &amp; Services</footer>
+
+</body>
+</html>

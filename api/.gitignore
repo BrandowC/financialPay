@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+
+# Export estático de admin/, copiado aquí solo para pruebas locales del
+# Dockerfile fusionado — en la imagen real lo genera el build, nunca se
+# committea (ver Dockerfile en la raíz).
+admin-static/*
+!admin-static/.gitkeep
+*.log
+.env
+.env.local
+.env.production
+!.env.example
+.DS_Store

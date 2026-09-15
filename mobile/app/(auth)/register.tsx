@@ -1,57 +1,59 @@
 import { useMemo, useState } from 'react';
 import {
-  Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { GradientBackground } from '@/components/GradientBackground';
-import { BrandHeader } from '@/components/BrandHeader';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { Select, type SelectOption } from '@/components/Select';
+import { Button } from '@/components/ui/Button';
+import { TextField } from '@/components/ui/TextField';
+import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
+import { UsFlag } from '@/components/ui/UsFlag';
+
+const LOGO = require('../../assets/images/Logo.png');
 import {
-  MONTHS,
+  isAtLeastMinAge,
   YEARS,
   daysInMonth,
-  US_FLAG,
   US_DIAL_CODE,
   US_PHONE_DIGITS,
 } from '@/lib/constants';
-import { supabase, isNetworkError } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
+import { messageFor } from '@/lib/error-messages';
+import { useLanguage, useT } from '@/lib/i18n';
+import { colors, spacing, typography } from '@/lib/theme';
 
-const MONTH_OPTIONS: SelectOption[] = MONTHS.map((name, i) => ({
-  value: String(i + 1),
-  label: name,
-}));
+const MONTHS_ES = [
+  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
+];
+const MONTHS_EN = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
+];
 
-const YEAR_OPTIONS: SelectOption[] = YEARS.map((y) => ({
-  value: String(y),
-  label: String(y),
-}));
+const YEAR_OPTIONS: SelectOption[] = YEARS.map((y) => ({ value: String(y), label: String(y) }));
 
 function pad2(n: number | string) {
   return String(n).padStart(2, '0');
 }
 
-type Errors = Partial<Record<
-  | 'fullName'
-  | 'date'
-  | 'phone'
-  | 'email'
-  | 'password'
-  | 'general',
-  string
->>;
+type Errors = Partial<Record<'fullName' | 'date' | 'phone' | 'email' | 'password' | 'general', string>>;
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const t = useT();
+  const { language } = useLanguage();
+  const { register, authenticating } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [day, setDay] = useState<string | null>(null);
@@ -60,17 +62,18 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
+
+  const monthOptions: SelectOption[] = useMemo(() => {
+    const list = language === 'en' ? MONTHS_EN : MONTHS_ES;
+    return list.map((name, i) => ({ value: String(i + 1), label: name }));
+  }, [language]);
 
   const dayOptions: SelectOption[] = useMemo(() => {
     const m = month ? Number(month) : 12;
     const y = year ? Number(year) : 2000;
     const total = daysInMonth(m, y);
-    return Array.from({ length: total }, (_, i) => ({
-      value: String(i + 1),
-      label: pad2(i + 1),
-    }));
+    return Array.from({ length: total }, (_, i) => ({ value: String(i + 1), label: pad2(i + 1) }));
   }, [month, year]);
 
   function clearError(key: keyof Errors) {
@@ -87,100 +90,69 @@ export default function RegisterScreen() {
   async function handleRegister() {
     const newErrors: Errors = {};
 
-    if (!fullName.trim()) newErrors.fullName = 'Escribe tu nombre completo.';
-    if (!day || !month || !year) newErrors.date = 'Completa día, mes y año.';
+    if (!fullName.trim()) newErrors.fullName = t('errEnterFullName');
+
+    if (!day || !month || !year) {
+      newErrors.date = t('errEnterDate');
+    } else if (!isAtLeastMinAge(Number(day), Number(month), Number(year))) {
+      newErrors.date = t('errUnderage');
+    }
+
     const phoneDigits = phone.replace(/\D/g, '');
-    if (!phoneDigits) newErrors.phone = 'Escribe tu número de celular.';
-    else if (phoneDigits.length !== US_PHONE_DIGITS)
-      newErrors.phone = 'Solo aceptamos números de Estados Unidos (10 dígitos).';
-    if (!email.trim()) newErrors.email = 'Escribe tu correo.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-      newErrors.email = 'Correo no válido.';
-    if (!password) newErrors.password = 'Escribe una contraseña.';
-    else if (password.length < 6)
-      newErrors.password = 'Mínimo 6 caracteres.';
+    if (!phoneDigits) newErrors.phone = t('errEnterPhone');
+    else if (phoneDigits.length !== US_PHONE_DIGITS) newErrors.phone = t('errInvalidUsPhone');
+
+    if (!email.trim()) newErrors.email = t('errEnterEmail');
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) newErrors.email = t('errInvalidEmail');
+
+    if (!password) newErrors.password = t('errEnterPassword');
+    else if (password.length < 8) newErrors.password = t('errPasswordMin');
 
     if (Object.keys(newErrors).length > 0) {
-      setErrors({
-        ...newErrors,
-        general: 'Completa los campos marcados en rojo.',
-      });
+      setErrors({ ...newErrors, general: t('errCompleteFields') });
       return;
     }
 
     setErrors({});
     const birthDate = `${year}-${pad2(month!)}-${pad2(day!)}`;
 
-    setSubmitting(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      await register({
+        fullName: fullName.trim(),
         email: email.trim(),
         password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            birth_date: birthDate,
-            phone_country_code: US_DIAL_CODE,
-            phone_number: phoneDigits,
-          },
-        },
+        birthDate,
+        phone: phoneDigits,
       });
-      setSubmitting(false);
-
-      if (error) {
-        console.warn('[FinancialPay] signUp error:', error);
-        if (isNetworkError(error)) {
-          setErrors({
-            general:
-              'Sin conexión o internet muy lento. Revisa tu Wi-Fi y vuelve a intentar.',
-          });
-        } else if (/already registered|exists/i.test(error.message)) {
-          setErrors({
-            general: 'Este correo ya tiene una cuenta. Intenta iniciar sesión.',
-          });
-        } else {
-          setErrors({
-            general: error.message || 'No pudimos crear tu cuenta.',
-          });
-        }
-        return;
-      }
-
-      if (!data.session) {
-        Alert.alert(
-          '¡Cuenta creada!',
-          'Revisa tu correo para confirmar la cuenta y luego inicia sesión.'
-        );
-        router.replace('/(auth)/login');
-        return;
-      }
-
       router.replace('/(app)/account');
     } catch (err) {
-      setSubmitting(false);
-      console.warn('[FinancialPay] signUp exception:', err);
-      setErrors({
-        general: isNetworkError(err)
-          ? 'Sin conexión o internet muy lento. Revisa tu Wi-Fi y vuelve a intentar.'
-          : 'Algo salió mal. Intenta de nuevo.',
-      });
+      console.warn('[AMCuenta] register error:', err);
+      setErrors({ general: messageFor(err, t) });
     }
   }
 
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safe}>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.topBar}>
+            <View style={styles.brandRow}>
+              <Image source={LOGO} style={styles.brandLogo} resizeMode="contain" />
+              <View>
+                <Text style={styles.brandTitle}>AM Cuenta</Text>
+                <Text style={styles.brandTagline}>{t('brandTagline')}</Text>
+              </View>
+            </View>
+            <LanguageToggle />
+          </View>
+
           <ScrollView
             contentContainerStyle={styles.container}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
             <Animated.View entering={FadeInDown.duration(500)}>
-              <BrandHeader subtitle="Crea tu cuenta" />
+              <Text style={styles.subtitle}>{t('registerSubtitle')}</Text>
             </Animated.View>
 
             {errors.general ? (
@@ -190,22 +162,21 @@ export default function RegisterScreen() {
             ) : null}
 
             <Animated.View entering={FadeInDown.delay(100).duration(500)}>
-              <Field label="Nombre completo" error={errors.fullName}>
-                <TextInput
-                  style={[styles.input, errors.fullName && styles.inputError]}
-                  placeholder="Juan Pérez"
-                  placeholderTextColor="#8aa0c4"
-                  value={fullName}
-                  onChangeText={(t) => {
-                    setFullName(t);
-                    clearError('fullName');
-                  }}
-                />
-              </Field>
+              <TextField
+                label={t('fullName')}
+                placeholder={t('fullNamePlaceholder')}
+                value={fullName}
+                onChangeText={(v) => {
+                  setFullName(v);
+                  clearError('fullName');
+                }}
+                error={errors.fullName}
+              />
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(150).duration(500)}>
-              <Field label="Fecha de nacimiento" error={errors.date}>
+              <View style={styles.field}>
+                <Text style={styles.label}>{t('birthDate')}</Text>
                 <View style={styles.row}>
                   <Select
                     value={day}
@@ -214,8 +185,8 @@ export default function RegisterScreen() {
                       clearError('date');
                     }}
                     options={dayOptions}
-                    placeholder="Día"
-                    title="Día"
+                    placeholder={t('day')}
+                    title={t('day')}
                     hasError={!!errors.date}
                     containerStyle={styles.cell}
                   />
@@ -231,9 +202,9 @@ export default function RegisterScreen() {
                       }
                       clearError('date');
                     }}
-                    options={MONTH_OPTIONS}
-                    placeholder="Mes"
-                    title="Mes"
+                    options={monthOptions}
+                    placeholder={t('month')}
+                    title={t('month')}
                     hasError={!!errors.date}
                     containerStyle={styles.cellWide}
                   />
@@ -244,95 +215,90 @@ export default function RegisterScreen() {
                       clearError('date');
                     }}
                     options={YEAR_OPTIONS}
-                    placeholder="Año"
-                    title="Año"
+                    placeholder={t('year')}
+                    title={t('year')}
                     hasError={!!errors.date}
                     containerStyle={styles.cell}
                   />
                 </View>
-              </Field>
+                {errors.date ? (
+                  <Text style={styles.errorText}>{errors.date}</Text>
+                ) : (
+                  <Text style={styles.hintText}>{t('birthDateHint')}</Text>
+                )}
+              </View>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(200).duration(500)}>
-              <Field label="Celular (Estados Unidos)" error={errors.phone}>
+              <View style={styles.field}>
+                <Text style={styles.label}>{t('phoneLabel')}</Text>
                 <View style={styles.row}>
                   <View style={styles.fixedCountry}>
-                    <Text style={styles.fixedCountryText}>
-                      {US_FLAG} {US_DIAL_CODE}
-                    </Text>
+                    <UsFlag />
+                    <Text style={styles.fixedCountryText}>{US_DIAL_CODE}</Text>
                   </View>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      styles.phoneInput,
-                      errors.phone && styles.inputError,
-                    ]}
-                    placeholder="3015551234"
-                    placeholderTextColor="#8aa0c4"
-                    keyboardType="phone-pad"
-                    maxLength={US_PHONE_DIGITS}
-                    value={phone}
-                    onChangeText={(t) => {
-                      setPhone(t.replace(/[^\d]/g, '').slice(0, US_PHONE_DIGITS));
-                      clearError('phone');
-                    }}
-                  />
+                  <View style={styles.phoneFieldWrap}>
+                    <TextField
+                      placeholder={t('phonePlaceholder')}
+                      keyboardType="phone-pad"
+                      maxLength={US_PHONE_DIGITS}
+                      value={phone}
+                      onChangeText={(v) => {
+                        setPhone(v.replace(/[^\d]/g, '').slice(0, US_PHONE_DIGITS));
+                        clearError('phone');
+                      }}
+                    />
+                  </View>
                 </View>
-              </Field>
+                {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
+              </View>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(250).duration(500)}>
-              <Field label="Correo electrónico" error={errors.email}>
-                <TextInput
-                  style={[styles.input, errors.email && styles.inputError]}
-                  placeholder="tu@correo.com"
-                  placeholderTextColor="#8aa0c4"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  keyboardType="email-address"
-                  value={email}
-                  onChangeText={(t) => {
-                    setEmail(t);
-                    clearError('email');
-                  }}
-                />
-              </Field>
+              <TextField
+                label={t('email')}
+                placeholder={t('emailPlaceholder')}
+                autoCapitalize="none"
+                autoComplete="email"
+                keyboardType="email-address"
+                value={email}
+                onChangeText={(v) => {
+                  setEmail(v);
+                  clearError('email');
+                }}
+                error={errors.email}
+              />
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(300).duration(500)}>
-              <Field label="Contraseña" error={errors.password}>
-                <TextInput
-                  style={[styles.input, errors.password && styles.inputError]}
-                  placeholder="Mínimo 6 caracteres"
-                  placeholderTextColor="#8aa0c4"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={(t) => {
-                    setPassword(t);
-                    clearError('password');
-                  }}
-                />
-              </Field>
+              <TextField
+                label={t('password')}
+                placeholder={t('passwordHint')}
+                secureTextEntry
+                value={password}
+                onChangeText={(v) => {
+                  setPassword(v);
+                  clearError('password');
+                }}
+                error={errors.password}
+              />
+              <View style={styles.strengthWrap}>
+                <PasswordStrengthMeter password={password} />
+              </View>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(350).duration(500)}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.primaryButton,
-                  (pressed || submitting) && styles.primaryButtonPressed,
-                ]}
+              <Button
+                title={authenticating ? t('creating') : t('create')}
                 onPress={handleRegister}
-                disabled={submitting}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {submitting ? 'Creando cuenta…' : 'Crear cuenta'}
-                </Text>
-              </Pressable>
+                loading={authenticating}
+                style={styles.submitButton}
+              />
 
               <View style={styles.footer}>
-                <Text style={styles.footerText}>¿Ya tienes cuenta? </Text>
+                <Text style={styles.footerText}>{t('haveAccountQ')}</Text>
                 <Link href="/(auth)/login" style={styles.footerLink}>
-                  Entrar
+                  {t('enter')}
                 </Link>
               </View>
             </Animated.View>
@@ -343,95 +309,77 @@ export default function RegisterScreen() {
   );
 }
 
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      {children}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
-  container: { padding: 24, paddingTop: 32, paddingBottom: 48 },
-  field: { marginBottom: 14 },
-  label: { color: '#B9CBEC', marginBottom: 6, fontSize: 14, fontWeight: '500' },
-  input: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#0B2A6B',
-    minHeight: 50,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
-  inputError: { borderColor: '#FF6B6B' },
-  errorText: {
-    color: '#FFB3B3',
-    fontSize: 13,
-    marginTop: 6,
-    marginLeft: 4,
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
+  brandLogo: { width: 50, height: 50 },
+  brandTitle: {
+    color: colors.gold,
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
+  brandTagline: {
+    color: colors.gold,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginTop: 1,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textOnDarkMuted,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 18,
+  },
+  container: { padding: spacing.xl, paddingTop: 4, paddingBottom: 48 },
+  field: { marginBottom: spacing.md },
+  label: { ...typography.label, color: colors.textOnDarkMuted, marginBottom: spacing.sm },
   banner: {
-    backgroundColor: 'rgba(255,107,107,0.16)',
-    borderColor: '#FF6B6B',
+    backgroundColor: colors.dangerBg,
+    borderColor: colors.danger,
     borderWidth: 1,
     borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
   bannerText: { color: '#FFD7D7', fontSize: 14, lineHeight: 20 },
   row: { flexDirection: 'row', gap: 8 },
-  cell: { flex: 1, minHeight: 50 },
-  cellWide: { flex: 1.5, minHeight: 50 },
+  cell: { flex: 1, minHeight: 52 },
+  cellWide: { flex: 1.5, minHeight: 52 },
   fixedCountry: {
-    width: 100,
-    minHeight: 50,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.25)',
-  },
-  fixedCountryText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  phoneInput: { flex: 1 },
-  primaryButton: {
-    backgroundColor: '#0B5FFF',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
-  },
-  primaryButtonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  primaryButtonText: { color: '#ffffff', fontSize: 17, fontWeight: '700' },
-  footer: {
+    width: 74,
+    minHeight: 52,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
+    gap: 6,
+    backgroundColor: colors.glassFillStrong,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: colors.glassBorder,
   },
-  footerText: { color: '#B9CBEC' },
-  footerLink: { color: '#ffffff', fontWeight: '700' },
+  fixedCountryText: { color: colors.white, fontSize: 15, fontWeight: '600' },
+  phoneFieldWrap: { flex: 1 },
+  errorText: { color: '#FFB3B3', fontSize: 13, marginTop: 6, marginLeft: 4 },
+  hintText: { color: colors.textOnDarkFaint, fontSize: 12, marginTop: 6, marginLeft: 4 },
+  strengthWrap: { marginTop: -spacing.md },
+  submitButton: { marginTop: spacing.sm },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.xl },
+  footerText: { color: colors.textOnDarkMuted },
+  footerLink: { ...typography.bodyStrong, color: colors.white },
 });

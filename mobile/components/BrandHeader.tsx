@@ -1,22 +1,35 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { useT } from '@/lib/i18n';
 
 type Props = {
+  /** Texto opcional bajo "Solutions & Services" (ej. tagline de pantalla) */
   subtitle?: string;
   compact?: boolean;
 };
 
+const GOLD = '#C9A961';
+
+// Logo de AM Financial. Para cambiarlo, reemplaza assets/images/Logo.png
+// con un PNG cuadrado (recomendado 1024×1024) y recarga la app.
+const LOGO_SOURCE = require('../assets/images/Logo.png');
+
 export function BrandHeader({ subtitle, compact }: Props) {
+  const t = useT();
+
   return (
     <View style={[styles.wrapper, compact && styles.wrapperCompact]}>
-      <View style={[styles.logoCircle, compact && styles.logoCircleCompact]}>
-        {/* Reemplaza este View por <Image source={require('../assets/logo.png')} /> cuando tengas el logo */}
-        <Text style={[styles.logoText, compact && styles.logoTextCompact]}>
-          FP
-        </Text>
-      </View>
+      <Image
+        source={LOGO_SOURCE}
+        style={[styles.logo, compact && styles.logoCompact]}
+        resizeMode="contain"
+      />
 
       <Text style={[styles.brand, compact && styles.brandCompact]}>
-        Financial<Text style={styles.brandAccent}>Pay</Text>
+        AM Cuenta
+      </Text>
+
+      <Text style={[styles.tagline, compact && styles.taglineCompact]}>
+        {t('brandTagline')}
       </Text>
 
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -25,46 +38,40 @@ export function BrandHeader({ subtitle, compact }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { alignItems: 'center', marginBottom: 28 },
-  wrapperCompact: { marginBottom: 16 },
-  logoCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+  wrapper: { alignItems: 'center', marginBottom: 24 },
+  wrapperCompact: { marginBottom: 12 },
+  logo: {
+    width: 200,
+    height: 200,
+    marginBottom: 4,
   },
-  logoCircleCompact: { width: 64, height: 64, borderRadius: 32, marginBottom: 10 },
-  logoText: {
-    color: '#ffffff',
-    fontSize: 32,
-    fontWeight: '900',
-    letterSpacing: 1,
+  logoCompact: {
+    width: 100,
+    height: 100,
+    marginBottom: 2,
   },
-  logoTextCompact: { fontSize: 22 },
   brand: {
-    fontSize: 44,
+    fontSize: 36,
     fontWeight: '900',
-    color: '#ffffff',
-    letterSpacing: 1.2,
-    textShadowColor: 'rgba(0,0,0,0.35)',
+    color: GOLD,
+    letterSpacing: 1.5,
+    textShadowColor: 'rgba(0,0,0,0.45)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
-  brandCompact: { fontSize: 28 },
-  brandAccent: { color: '#7DD3FC' },
+  brandCompact: { fontSize: 22 },
+  tagline: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: GOLD,
+    letterSpacing: 2.5,
+    marginTop: 4,
+    textTransform: 'uppercase',
+  },
+  taglineCompact: { fontSize: 10, letterSpacing: 1.5 },
   subtitle: {
     color: '#B9CBEC',
-    marginTop: 6,
+    marginTop: 10,
     fontSize: 15,
     letterSpacing: 0.3,
   },

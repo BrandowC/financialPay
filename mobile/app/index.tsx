@@ -1,19 +1,20 @@
 import { Redirect, type Href } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useAuth } from '@/lib/auth';
+import { colors } from '@/lib/theme';
 
 export default function Index() {
-  const { session, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#0B5FFF" />
+        <ActivityIndicator size="large" color={colors.brand400} />
       </View>
     );
   }
 
-  const href: Href = session ? '/(app)/account' : ('/welcome' as Href);
+  const href: Href = isAuthenticated ? '/(app)/account' : ('/welcome' as Href);
   return <Redirect href={href} />;
 }
 
@@ -22,6 +23,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0B2A6B',
+    backgroundColor: colors.brand900,
   },
 });

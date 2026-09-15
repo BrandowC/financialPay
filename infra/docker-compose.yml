@@ -1,0 +1,86 @@
+# =============================================================================
+# AM Cuenta · Entorno de desarrollo local
+# =============================================================================
+#   docker compose -f infra/docker-compose.yml up -d
+#
+# Levanta PostgreSQL, Redis y pgAdmin. La API y el panel corren fuera de Docker
+# en desarrollo (recarga en caliente mucho más rápida).
+# =============================================================================
+
+name: amcuenta
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: amcuenta-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: amcuenta
+      POSTGRES_PASSWORD: amcuenta_dev
+      POSTGRES_DB: amcuenta
+      # Colación determinista: sin esto, el orden de los nombres cambia según
+      # la configuración regional del sistema anfitrión y los tests que
+      # verifican ordenamiento fallan en unas máquinas y en otras no.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Sin healthcheck, la API arranca antes de que Postgres acepte
+      # conexiones y falla el primer despliegue de cada día.
+      test: ["CMD-SHELL", "pg_isready -U amcuenta -d amcuenta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    command:
+      - "postgres"
+      # Registra toda consulta que pase de 500 ms: es la forma más barata de
+      # encontrar los índices que faltan antes de que sea un problema.
+      - "-c"
+      - "log_min_duration_statement=500"
+      - "-c"
+      - "max_connections=100"
+      # Con 2.000 usuarios/día basta de sobra; en producción se ajusta a la RAM.
+      - "-c"
+      - "shared_buffers=256MB"
+
+  redis:
+    image: redis:7-alpine
+    container_name: amcuenta-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Interfaz web para mirar la base sin instalar nada. http://localhost:5050
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: amcuenta-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@amcuenta.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      # No arranca por defecto. Para incluirlo:
+      #   docker compose --profile tools up -d
+      - tools
+
+volumes:
+  postgres_data:
+  redis_data:

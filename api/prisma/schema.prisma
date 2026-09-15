@@ -1,0 +1,265 @@
+// =============================================================================
+// AM Cuenta · Modelo de datos
+// =============================================================================
+// Este archivo es el ESPEJO tipado de las migraciones SQL que están en
+// prisma/migrations/. La fuente de verdad del DDL es el SQL (ahí viven los
+// triggers, las columnas generadas, los índices parciales y las funciones que
+// Prisma no sabe expresar). Prisma se usa como cliente tipado, no como
+// generador de esquema.
+//
+// Por eso NUNCA se corre `prisma migrate dev` contra este schema sin revisar
+// el SQL que produce. El comando de despliegue es `prisma migrate deploy`.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enums (deben coincidir exactamente con los CREATE TYPE del SQL)
+// -----------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+
+  @@map("user_status")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  OPERATOR
+  VIEWER
+
+  @@map("admin_role")
+}
+
+enum PrincipalType {
+  CUSTOMER
+  ADMIN
+
+  @@map("principal_type")
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  DEAD
+
+  @@map("outbox_status")
+}
+
+// -----------------------------------------------------------------------------
+// Modelos
+// -----------------------------------------------------------------------------
+
+model User {
+  id                  String     @id @default(uuid()) @db.Uuid
+  email               String     @db.Citext
+  passwordHash        String     @map("password_hash")
+  status              UserStatus @default(ACTIVE)
+  emailVerifiedAt     DateTime?  @map("email_verified_at") @db.Timestamptz(6)
+
+  failedLoginAttempts Int        @default(0) @map("failed_login_attempts") @db.SmallInt
+  lockedUntil         DateTime?  @map("locked_until") @db.Timestamptz(6)
+  lastLoginAt         DateTime?  @map("last_login_at") @db.Timestamptz(6)
+
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  profile             Profile?
+  balance             Balance?
+  balanceAudits       BalanceAudit[]
+
+  @@index([status])
+  @@map("users")
+}
+
+model Profile {
+  userId           String   @id @map("user_id") @db.Uuid
+  fullName         String   @map("full_name")
+
+  /// Columna GENERADA por Postgres. Opcional en Prisma para que nunca se
+  /// intente escribir en un INSERT — Postgres la rechazaría.
+  normalizedName   String?  @map("normalized_name")
+
+  birthDate        DateTime @map("birth_date") @db.Date
+  phoneCountryCode String   @default("+1") @map("phone_country_code")
+  phoneNumber      String   @map("phone_number")
+  accountNumber    String   @unique @map("account_number")
+
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([normalizedName])
+  @@index([createdAt(sort: Desc)])
+  @@map("profiles")
+}
+
+model Balance {
+  userId      String   @id @map("user_id") @db.Uuid
+
+  /// Centavos. Se mapea a BigInt en TypeScript a propósito: obliga a que el
+  /// código no mezcle accidentalmente dólares y centavos.
+  amountCents BigInt   @default(0) @map("amount_cents")
+  currency    String   @default("USD") @db.Char(3)
+
+  /// Bloqueo optimista. Ver BalanceRepository.updateAmount().
+  version     Int      @default(0)
+
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  updatedBy   String?  @map("updated_by") @db.Uuid
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedByAdmin AdminUser? @relation(fields: [updatedBy], references: [id])
+
+  @@map("balances")
+}
+
+model AdminUser {
+  id                  String    @id @default(uuid()) @db.Uuid
+  email               String    @unique @db.Citext
+  passwordHash        String    @map("password_hash")
+  fullName            String    @map("full_name")
+  role                AdminRole @default(OPERATOR)
+  isActive            Boolean   @default(true) @map("is_active")
+
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts") @db.SmallInt
+  lockedUntil         DateTime? @map("locked_until") @db.Timestamptz(6)
+  lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz(6)
+
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  balancesUpdated     Balance[]
+  auditEntries        BalanceAudit[]
+
+  @@index([isActive])
+  @@map("admin_users")
+}
+
+model RefreshToken {
+  id            String        @id @default(uuid()) @db.Uuid
+  principalId   String        @map("principal_id") @db.Uuid
+  principalKind PrincipalType @map("principal_kind")
+
+  /// SHA-256 del token. El valor en claro solo existe en el cliente.
+  tokenHash     String        @unique @map("token_hash")
+
+  /// Todos los tokens rotados desde un mismo login comparten familia.
+  /// Si llega uno ya usado, se revoca la familia entera (detección de robo).
+  familyId      String        @map("family_id") @db.Uuid
+  replacedBy    String?       @map("replaced_by") @db.Uuid
+
+  userAgent     String?       @map("user_agent")
+  ipAddress     String?       @map("ip_address") @db.Inet
+
+  expiresAt     DateTime      @map("expires_at") @db.Timestamptz(6)
+  revokedAt     DateTime?     @map("revoked_at") @db.Timestamptz(6)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([principalId, principalKind])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+model BalanceAudit {
+  id             BigInt   @id @default(autoincrement())
+  userId         String   @map("user_id") @db.Uuid
+
+  previousCents  BigInt   @map("previous_cents")
+  newCents       BigInt   @map("new_cents")
+
+  /// Columna GENERADA. Opcional para que Prisma no la escriba nunca.
+  deltaCents     BigInt?  @map("delta_cents")
+  currency       String   @db.Char(3)
+
+  changedBy      String?  @map("changed_by") @db.Uuid
+  changedByEmail String?  @map("changed_by_email")
+
+  reason         String?
+  ipAddress      String?  @map("ip_address") @db.Inet
+  userAgent      String?  @map("user_agent")
+
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin          AdminUser? @relation(fields: [changedBy], references: [id])
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([changedBy, createdAt(sort: Desc)])
+  @@map("balance_audit")
+}
+
+model OutboxEvent {
+  id            BigInt       @id @default(autoincrement())
+
+  aggregateType String       @map("aggregate_type")
+  aggregateId   String       @map("aggregate_id") @db.Uuid
+  eventType     String       @map("event_type")
+  payload       Json
+
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0) @db.SmallInt
+  maxAttempts   Int          @default(12) @map("max_attempts") @db.SmallInt
+  lastError     String?      @map("last_error")
+
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+
+  lockedBy      String?      @map("locked_by")
+  lockedAt      DateTime?    @map("locked_at") @db.Timestamptz(6)
+
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  processedAt   DateTime?    @map("processed_at") @db.Timestamptz(6)
+
+  @@index([aggregateType, aggregateId])
+  @@map("outbox_events")
+}
+
+model SecurityEvent {
+  id          BigInt   @id @default(autoincrement())
+  eventType   String   @map("event_type")
+  principalId String?  @map("principal_id") @db.Uuid
+  email       String?  @db.Citext
+  ipAddress   String?  @map("ip_address") @db.Inet
+  userAgent   String?  @map("user_agent")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([eventType, createdAt(sort: Desc)])
+  @@index([ipAddress, createdAt(sort: Desc)])
+  @@index([email, createdAt(sort: Desc)])
+  @@map("security_events")
+}
+
+/// Quién se registró alguna vez, para siempre — sobrevive a que el cliente
+/// elimine su cuenta. A propósito SIN relación hacia `User`: si tuviera FK con
+/// CASCADE, se borraría junto con la cuenta, que es justo lo que esta tabla
+/// existe para evitar. Se llena una única vez, en el mismo INSERT
+/// transaccional del registro (ver PrismaCustomerRepository.create()), y de
+/// ahí en más es de solo lectura (ver migración 20260916000000).
+model RegistrationLedger {
+  id            BigInt   @id @default(autoincrement())
+  userId        String   @map("user_id") @db.Uuid
+  accountNumber String   @map("account_number")
+  fullName      String   @map("full_name")
+  email         String   @db.Citext
+  phone         String
+  birthDate     DateTime @map("birth_date") @db.Date
+  registeredAt  DateTime @map("registered_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([registeredAt(sort: Desc)])
+  @@map("registration_ledger")
+}
