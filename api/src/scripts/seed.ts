@@ -5,18 +5,29 @@ import * as argon2 from 'argon2';
 /**
  * Semilla: crea el primer administrador si no existe ninguno.
  *
+ * ── Por qué vive en `src/` y no en `prisma/` ────────────────────────────────
+ * `nest build` solo compila lo que está bajo `sourceRoot` (`src/`, ver
+ * nest-cli.json). En producción la imagen se queda sin `ts-node`/`typescript`
+ * (son devDependencies, se podan con `npm prune --omit=dev`), así que un
+ * script en `prisma/seed.ts` no se podría ejecutar ahí. Al vivir en `src/`,
+ * `nest build` lo compila a `dist/src/scripts/seed.js` y se puede correr con
+ * `node` a secas, sin ts-node.
+ *
  * ── Por qué el `import 'dotenv/config'` de arriba es necesario ─────────────
- * Este archivo se ejecuta con `ts-node` directamente (`npm run db:seed`), no a
- * través del CLI de `prisma`. La carga automática de `.env` que Prisma
- * documenta solo ocurre cuando el comando pasa por su propio CLI (`prisma
- * migrate`, `npx prisma db seed`…); un `ts-node` corriendo a secas no carga
- * nada por su cuenta, así que sin esta línea `DATABASE_URL` llega vacío y
- * `PrismaClient` no puede conectarse.
+ * Este archivo se ejecuta directamente (`npm run db:seed` en desarrollo, o
+ * `node dist/src/scripts/seed.js` en producción), no a través del CLI de
+ * Prisma. La carga automática de `.env` que Prisma documenta solo ocurre
+ * cuando el comando pasa por su propio CLI (`prisma migrate`, `npx prisma db
+ * seed`…); sin esta línea `DATABASE_URL` llega vacío en desarrollo y
+ * `PrismaClient` no puede conectarse (en producción las variables ya las
+ * inyecta Render, así que ahí esta línea no hace nada, pero tampoco estorba).
  *
  * ── Por qué es idempotente ───────────────────────────────────────────────
- * Este script se puede correr tantas veces como se quiera (en cada
- * despliegue, por ejemplo) sin duplicar nada ni resetear la contraseña de un
- * administrador que ya la cambió. Solo actúa si la tabla está vacía.
+ * Este script se corre en CADA arranque del contenedor (ver el CMD del
+ * Dockerfile) — es la única forma de sembrar el primer admin en Render sin
+ * acceso a Shell, que el plan gratuito no incluye. Por eso es crítico que
+ * solo actúe si la tabla está vacía: nunca duplica ni resetea la contraseña
+ * de un administrador que ya la cambió.
  */
 const prisma = new PrismaClient();
 

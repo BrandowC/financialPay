@@ -94,4 +94,11 @@ ENTRYPOINT ["dumb-init", "--"]
 
 # Las migraciones se aplican al arrancar. `migrate deploy` solo aplica lo
 # pendiente y nunca borra datos (a diferencia de `migrate dev`).
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
+#
+# La siembra del primer administrador (`db:seed:prod`) también corre en CADA
+# arranque — no es opcional en Render con plan gratuito, porque ese plan no
+# incluye Shell y no hay otra forma de correr un comando de una sola vez. Es
+# seguro: el script solo crea un admin si la tabla está vacía (ver
+# src/scripts/seed.ts). Va con `|| true` para que un fallo ahí (ej. un envío
+# de SEED_ADMIN_PASSWORD demasiado corto) nunca le impida arrancar a la API.
+CMD ["sh", "-c", "npx prisma migrate deploy && (node dist/src/scripts/seed.js || true) && node dist/src/main.js"]
