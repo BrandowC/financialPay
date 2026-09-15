@@ -94,4 +94,4 @@ ENTRYPOINT ["dumb-init", "--"]
 
 # Las migraciones se aplican al arrancar. `migrate deploy` solo aplica lo
 # pendiente y nunca borra datos (a diferencia de `migrate dev`).
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
