@@ -17,7 +17,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-staging.amcuenta.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://amcuenta-api.onrender.com/api/v1"
       }
     },
     "production": {
