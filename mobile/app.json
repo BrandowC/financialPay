@@ -8,7 +8,7 @@
     "scheme": "amfinancial",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.amfinancial.app"
     },
     "android": {
