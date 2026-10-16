@@ -11,11 +11,9 @@
 # corren varias instancias, ahí sí hace falta un Redis compartido para que el
 # límite sea global y no se multiplique por instancia.
 #
-# Plan de Postgres en "free": ideal para arrancar sin costo, pero el plan
-# gratuito de Render tiene límites de almacenamiento y puede eliminarse tras
-# un período de inactividad — revisa los términos vigentes en Render antes de
-# confiarle datos reales de clientes a largo plazo. Subir a "starter" cuando
-# el negocio lo justifique es un cambio de una sola línea aquí.
+# Plan de Postgres "0.1c-256mb" (de pago, ~$6/mes): el plan gratuito de Render
+# expira a los 30 días y suspende la base de datos, por eso se subió de plan
+# (octubre 2026). No volver a "free" con datos reales de clientes.
 #
 # Uso: en Render, "New +" → "Blueprint", conectar este repositorio. Render lee
 # este archivo y crea los dos recursos de una vez. Las variables marcadas
@@ -24,7 +22,7 @@
 
 databases:
   - name: amcuenta-postgres
-    plan: free
+    plan: 0.1c-256mb
     databaseName: amcuenta
     user: amcuenta
 
