@@ -73,6 +73,7 @@ const translations = {
     goalsCount: "{n} metas",
     goalsCountOne: "1 meta",
     completedCount: "{n} cumplidas",
+    completedCountOne: "1 cumplida",
     noGoalsTitle: "Crea tu primera meta",
     noGoalsMsg:
       "Un viaje, una moto, un fondo de emergencia. Ponle un nombre y un monto, y empieza a registrar lo que ahorras.",
@@ -260,6 +261,7 @@ const translations = {
     goalsCount: "{n} goals",
     goalsCountOne: "1 goal",
     completedCount: "{n} completed",
+    completedCountOne: "1 completed",
     noGoalsTitle: "Create your first goal",
     noGoalsMsg:
       "A trip, a motorbike, an emergency fund. Give it a name and an amount, and start logging what you save.",

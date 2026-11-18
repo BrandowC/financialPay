@@ -133,12 +133,16 @@ export default function HomeScreen() {
 
                 <Text style={styles.summaryMeta}>
                   {active.length === 1 ? t('goalsCountOne') : t('goalsCount', { n: active.length })}
-                  {completedCount > 0 ? ` · ${t('completedCount', { n: completedCount })}` : ''}
+                  {completedCount === 1
+                    ? ` · ${t('completedCountOne')}`
+                    : completedCount > 1
+                      ? ` · ${t('completedCount', { n: completedCount })}`
+                      : ''}
                 </Text>
               </LinearGradient>
             </Animated.View>
 
-            {goals.length === 0 ? (
+            {(goals?.length ?? 0) === 0 ? (
               <Animated.View entering={FadeIn.delay(200).duration(500)} style={styles.empty}>
                 <Text style={styles.emptyEmoji}>🎯</Text>
                 <Text style={styles.stateTitle}>{t('noGoalsTitle')}</Text>

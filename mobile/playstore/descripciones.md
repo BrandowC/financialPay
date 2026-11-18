@@ -1,142 +1,60 @@
-# Textos para Google Play Store — AM Cuenta
+# Textos para Google Play Console — Metas
 
-Copia y pega estos textos en los campos correspondientes de Play Console.
+Es una **actualización de la ficha que ya existe** (mismo paquete `com.amfinancial.app`): cambia el nombre, los textos, el ícono y las capturas, y se sube un `.aab` nuevo (versión 2.0.0).
 
----
-
-## 📝 Nombre de la app (max 30 caracteres)
+## Nombre de la app (máx. 30)
 
 ```
-AM Cuenta
+Metas: Ahorro por objetivos
 ```
 
-> **Caracteres:** 9 / 30 ✅
-
----
-
-## 📝 Descripción corta (max 80 caracteres)
+## Descripción breve (máx. 80)
 
 ```
-Consulta el saldo de tu cuenta AM Cuenta de forma simple, rápida y segura.
+Crea metas de ahorro, registra tus aportes y mira tu progreso.
 ```
+> 62 / 80 ✅
 
-> **Caracteres:** 75 / 80 ✅
-
----
-
-## 📝 Descripción larga (max 4000 caracteres)
-
-Copia exactamente esto en el campo "Full description":
+## Descripción completa (máx. 4.000)
 
 ```
-AM Cuenta es la aplicación oficial para que nuestros clientes consulten el estado de su cuenta de forma simple, rápida y segura, desde cualquier lugar.
+Metas te ayuda a ahorrar para lo que de verdad importa: un viaje, una moto, un fondo de emergencia, los estudios. Defines cuánto quieres juntar, registras cada aporte y ves cómo avanzas.
 
-✨ FUNCIONALIDADES
+CÓMO FUNCIONA
 
-✓ Crear tu cuenta personal en menos de un minuto
-✓ Iniciar sesión con tu nombre o correo y contraseña
-✓ Consultar el valor de tu cuenta en una pantalla clara y actualizada
-✓ Cambiar entre español e inglés con un solo toque
-✓ Cerrar sesión en cualquier momento
-✓ Eliminar tu cuenta y todos tus datos de forma permanente cuando quieras
+• Crea una meta con nombre, ícono, monto y, si quieres, fecha límite.
+• Registra tus aportes y retiros cuando ahorres o uses parte de lo juntado.
+• Mira tu barra de progreso, cuánto llevas ahorrado y cuánto te falta.
+• Si pones fecha límite, Metas te dice cuánto ahorrar por mes para llegar a tiempo.
+• Consulta el historial completo de cada meta.
+• Archiva las metas que ya cumpliste o pausaste.
 
-⚠️ IMPORTANTE — QUÉ ES Y QUÉ NO ES AM CUENTA
+PENSADA PARA TI, VENGAS DE DONDE VENGAS
 
-AM Cuenta NO es un banco, NO es una entidad financiera, NO otorga créditos ni préstamos, y NO procesa pagos, depósitos, retiros ni transferencias de ningún tipo. El valor que ves en la app es un dato administrativo que nuestro equipo gestiona manualmente para cada cliente como parte de nuestro servicio; no representa fondos bancarios y no puede canjearse ni transferirse como dinero.
+• Regístrate desde cualquier país, con el prefijo de tu teléfono.
+• Maneja cada meta en su propia moneda (pesos, dólares, euros y más).
+• Disponible en español e inglés.
 
-🔒 PRIVACIDAD Y SEGURIDAD
+TUS DATOS, SOLO TUYOS
 
-Nos tomamos la privacidad en serio:
+• No vendemos tus datos ni mostramos publicidad.
+• Puedes eliminar tu cuenta y todo lo que registraste cuando quieras, desde la propia app.
 
-• Toda la información viaja cifrada con HTTPS/TLS
-• Las contraseñas se protegen con Argon2id, un estándar moderno de seguridad
-• Puedes eliminar tu cuenta y todos tus datos en cualquier momento desde la propia app
-• No mostramos anuncios ni compartimos tus datos con terceros con fines de publicidad
+IMPORTANTE
 
-📋 DATOS QUE PEDIMOS AL REGISTRARTE
-
-• Nombre completo
-• Correo electrónico
-• Contraseña (cifrada, nunca en texto plano)
-• Fecha de nacimiento (para verificar que eres mayor de 18 años)
-• Número de celular (Estados Unidos)
-
-🌐 IDIOMAS DISPONIBLES
-
-• Español
-• Inglés
-
-Puedes cambiar entre ambos desde cualquier pantalla, con un solo toque.
-
-📧 CONTACTO
-
-Para preguntas o soporte relacionado con tu cuenta:
-fronterayaite@gmail.com
-
-📜 POLÍTICA DE PRIVACIDAD
-
-Disponible en el enlace de la sección "Privacy Policy" de esta ficha.
+Metas es un cuaderno de ahorro personal. NO es un banco, NO guarda ni mueve dinero real, NO se conecta a cuentas bancarias ni tarjetas y NO ofrece préstamos ni inversiones. Los montos son anotaciones que tú mismo registras para llevar el control de tus metas.
 ```
 
-> **Caracteres:** ~1,850 / 4,000 ✅
+## Categoría y etiquetas
 
----
+- **Categoría:** Finanzas (o Productividad).
+- **Política de privacidad:** `https://amcuenta-api.onrender.com/privacy`
 
-## 📝 Email del desarrollador (Developer contact email)
+## Declaración de funciones financieras
 
-```
-fronterayaite@gmail.com
-```
+Play Console → Contenido de la app → **Funciones financieras**: elige **"Mi app no ofrece ninguna función financiera"**. Metas solo lleva un registro personal: no mueve dinero, no da créditos, no es banca ni inversión.
 
----
+## Eliminación de cuenta (obligatorio)
 
-## 📝 Política de privacidad (URL pública, ya publicada)
-
-```
-https://claude.ai/code/artifact/8513bc71-3218-4924-b475-f4d1c58f9ed0
-```
-
-> ⚠️ **Antes de pegar esta URL en Play Console**, ábrela con tu sesión y usa el menú de compartir para hacerla **pública** — por defecto los artefactos son privados y el revisor de Google no podría verla. Si prefieres tener la política en tu propio dominio, sigue [`instrucciones-hosting.md`](instrucciones-hosting.md) (GitHub Pages/Netlify/Vercel) y usa esa URL en su lugar.
-
----
-
-## 📝 Categoría
-
-En el menú "App category" elige:
-
-- **Categoría principal:** `Productivity`
-- **Tags:** `Account management`, `Authentication`
-
-> **¿Por qué Productivity y no Finance?** Aunque la app muestra un "saldo", NO ofrece ninguna función financiera real (no procesa pagos, no otorga créditos, no conecta con bancos). Elegir "Finance" activaría formularios adicionales de declaración de servicios financieros que no aplican aquí. "Productivity" describe honestamente lo que la app hace: gestionar el acceso a una cuenta y consultar un estado.
-
----
-
-## 📝 Tipo de app
-
-- **App o Game:** App
-- **Free or Paid:** Free
-
----
-
-## 📝 Texto corto / tagline (si Play Console lo pide)
-
-```
-Consulta el estado de tu cuenta AM Cuenta desde tu celular.
-```
-
----
-
-## ✅ CHECK FINAL
-
-Antes de submit, verifica que todos estos campos estén llenos en Play Console:
-
-- [ ] Nombre de la app: `AM Cuenta`
-- [ ] Descripción corta (80 chars)
-- [ ] Descripción larga (~1850 chars)
-- [ ] Email de contacto del desarrollador
-- [ ] URL de Política de Privacidad (pública, verificada en una ventana de incógnito)
-- [ ] Categoría: Productivity
-- [ ] Icono 512×512 subido (`graficos/icon-512.png`)
-- [ ] Feature Graphic 1024×500 subido (`graficos/feature-graphic-1024x500.png`)
-- [ ] Mínimo 2 screenshots de Android reales (recomendado 4-6, ver `graficos/`)
-- [ ] AAB compilado y subido (`eas build --platform android --profile production`)
+- Dentro de la app: **Perfil → Eliminar mi cuenta** (inmediato y definitivo).
+- URL pública para pedir la eliminación (campo de la ficha): la misma de la política, `https://amcuenta-api.onrender.com/privacy`, donde se explica el paso a paso.

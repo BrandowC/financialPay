@@ -1,175 +1,99 @@
-# Textos para App Store Connect — AM Cuenta
+# Textos para App Store Connect — Metas
 
-Copia y pega estos textos en los campos correspondientes de App Store Connect. Los límites son los que exige Apple — no son sugerencias.
+Copia y pega en los campos de App Store Connect. Los límites son los de Apple.
 
----
-
-## 📝 Nombre de la app (max 30 caracteres)
-
-```
-AM Cuenta
-```
-
-> **Caracteres:** 9 / 30 ✅
+Esto es una **actualización de la ficha que ya existe** (mismo identificador `com.amfinancial.app`): se cambia el nombre, los textos, el ícono y las capturas, y se sube una versión nueva (2.0.0).
 
 ---
 
-## 📝 Subtítulo (max 30 caracteres)
-
-Aparece justo debajo del nombre en la ficha. Apple no tiene "descripción corta" separada como Google Play — el subtítulo cumple ese rol.
+## Nombre (máx. 30)
 
 ```
-Tu cuenta, siempre contigo
+Metas: Ahorro por objetivos
 ```
+> 27 / 30 ✅
 
-> **Caracteres:** 26 / 30 ✅
-
----
-
-## 📝 Texto promocional / Promotional Text (max 170 caracteres)
-
-Es el único campo que puedes editar **sin subir una versión nueva** — úsalo para anuncios o cambios recientes.
+## Subtítulo (máx. 30)
 
 ```
-Consulta el saldo de tu cuenta AM Cuenta de forma simple, rápida y segura, desde cualquier lugar. Disponible en español e inglés.
+Junta para lo que importa
 ```
+> 25 / 30 ✅
 
-> **Caracteres:** 130 / 170 ✅
-
----
-
-## 📝 Descripción (max 4,000 caracteres)
-
-Mismo contenido que en Play Store, sin los emojis de encabezado que Apple recomienda evitar en exceso:
+## Texto promocional (máx. 170) — editable sin subir versión
 
 ```
-AM Cuenta es la aplicación oficial para que nuestros clientes consulten el estado de su cuenta de forma simple, rápida y segura, desde cualquier lugar.
-
-FUNCIONALIDADES
-
-- Crear tu cuenta personal en menos de un minuto
-- Iniciar sesión con tu nombre o correo y contraseña
-- Consultar el valor de tu cuenta en una pantalla clara y actualizada
-- Cambiar entre español e inglés con un solo toque
-- Cerrar sesión en cualquier momento
-- Eliminar tu cuenta y todos tus datos de forma permanente cuando quieras
-
-IMPORTANTE — QUÉ ES Y QUÉ NO ES AM CUENTA
-
-AM Cuenta NO es un banco, NO es una entidad financiera, NO otorga créditos ni préstamos, y NO procesa pagos, depósitos, retiros ni transferencias de ningún tipo. El valor que ves en la app es un dato administrativo que nuestro equipo gestiona manualmente para cada cliente como parte de nuestro servicio; no representa fondos bancarios y no puede canjearse ni transferirse como dinero.
-
-PRIVACIDAD Y SEGURIDAD
-
-Nos tomamos la privacidad en serio:
-
-- Toda la información viaja cifrada con HTTPS/TLS
-- Las contraseñas se protegen con Argon2id, un estándar moderno de seguridad
-- Puedes eliminar tu cuenta y todos tus datos en cualquier momento desde la propia app
-- No mostramos anuncios ni compartimos tus datos con terceros con fines de publicidad
-
-DATOS QUE PEDIMOS AL REGISTRARTE
-
-- Nombre completo
-- Correo electrónico
-- Contraseña (cifrada, nunca en texto plano)
-- Fecha de nacimiento (para verificar que eres mayor de 18 años)
-- Número de celular (Estados Unidos)
-
-IDIOMAS DISPONIBLES
-
-- Español
-- Inglés
-
-Puedes cambiar entre ambos desde cualquier pantalla, con un solo toque.
-
-CONTACTO
-
-Para preguntas o soporte relacionado con tu cuenta:
-fronterayaite@gmail.com
-
-POLÍTICA DE PRIVACIDAD
-
-Disponible en el enlace de la sección "Privacy Policy" de esta ficha.
+Crea tus metas de ahorro, registra cada aporte y mira cómo crece tu barra de progreso. Gratis, en español e inglés y desde cualquier país.
 ```
+> 138 / 170 ✅
 
-> **Caracteres:** ~1,750 / 4,000 ✅
-
----
-
-## 📝 Palabras clave / Keywords (max 100 **bytes**, separadas por coma, sin espacios después de la coma)
-
-Apple mide esto en bytes, no caracteres — evita acentos si te acercas al límite (aquí no hace falta):
+## Descripción (máx. 4.000)
 
 ```
-cuenta,saldo,finanzas,administracion,seguridad,perfil,acceso,privado
+Metas te ayuda a ahorrar para lo que de verdad importa: un viaje, una moto, un fondo de emergencia, los estudios. Defines cuánto quieres juntar, registras cada aporte y ves cómo avanzas.
+
+CÓMO FUNCIONA
+
+- Crea una meta con nombre, ícono, monto y, si quieres, fecha límite.
+- Registra tus aportes y retiros cuando ahorres o uses parte de lo juntado.
+- Mira tu barra de progreso, cuánto llevas ahorrado y cuánto te falta.
+- Si pones fecha límite, Metas te dice cuánto ahorrar por mes para llegar a tiempo.
+- Consulta el historial completo de cada meta.
+- Archiva las metas que ya cumpliste o pausaste.
+
+PENSADA PARA TI, VENGAS DE DONDE VENGAS
+
+- Regístrate desde cualquier país, con el prefijo de tu teléfono.
+- Maneja cada meta en su propia moneda (pesos, dólares, euros y más).
+- Disponible en español e inglés.
+
+TUS DATOS, SOLO TUYOS
+
+- No vendemos tus datos ni mostramos publicidad.
+- Puedes eliminar tu cuenta y todo lo que registraste cuando quieras, desde la propia app.
+
+IMPORTANTE
+
+Metas es un cuaderno de ahorro personal. NO es un banco, NO guarda ni mueve dinero real, NO se conecta a cuentas bancarias ni tarjetas y NO ofrece préstamos ni inversiones. Los montos son anotaciones que tú mismo registras para llevar el control de tus metas.
+
+Política de privacidad: https://amcuenta-api.onrender.com/privacy
 ```
 
-> **Bytes:** ~68 / 100 ✅ — no repitas palabras que ya están en el nombre o subtítulo (Apple lo penaliza, es redundante para el buscador).
-
----
-
-## 📝 Notas de la versión / What's New (max 4,000 caracteres, solo para actualizaciones — la primera versión no lo pide)
+## Palabras clave (máx. 100, separadas por coma, sin espacios)
 
 ```
-Primera versión de AM Cuenta: crea tu cuenta, consulta tu saldo y administra tu perfil de forma simple y segura.
+ahorro,metas,ahorrar,objetivos,alcancia,presupuesto,dinero,finanzas personales,meta de ahorro
 ```
+> 94 / 100 ✅
 
----
+## URL de soporte y de privacidad
 
-## 📝 URL de soporte (Support URL) — obligatoria
+- **URL de privacidad:** `https://amcuenta-api.onrender.com/privacy`
+- **URL de soporte:** la que ya tenías en la ficha (puede ser tu correo con `mailto:` o una página tuya).
 
-Tiene que ser una página que **cargue de verdad** (Apple la visita). Si no tienes una web propia, la política de privacidad sirve como página de contacto también:
+## Categoría
 
-```
-https://claude.ai/code/artifact/8513bc71-3218-4924-b475-f4d1c58f9ed0
-```
+- **Principal:** Finanzas (o Productividad, si quieres evitar preguntas del revisor).
+- Es un cuaderno de ahorro personal: no ofrece servicios financieros, así que no aplica la guideline 5.1.1(ix).
 
-> Si más adelante tienes un sitio propio para AM Cuenta, cambia esto por esa URL — se ve más profesional que reusar la política de privacidad, pero funcionalmente cumple el requisito.
-
----
-
-## 📝 URL de marketing (Marketing URL) — opcional
-
-Déjala vacía por ahora, no es obligatoria.
-
----
-
-## 📝 Copyright
+## Qué hay de nuevo (versión 2.0.0)
 
 ```
-2026 AM Cuenta Solutions & Services
+Nueva versión de la app, ahora llamada Metas: ahorro por objetivos. Crea metas, registra tus aportes y mira tu progreso.
 ```
 
----
-
-## 📝 Correo de contacto (App Review Contact Information)
+## Notas para el revisor de App Review
 
 ```
-fronterayaite@gmail.com
+Metas es un cuaderno de ahorro personal. El usuario crea metas, anota cuánto quiere juntar y registra aportes manualmente. La app NO mueve dinero real, NO se conecta a bancos, tarjetas ni proveedores de pago, y NO ofrece préstamos ni inversiones. Los montos son anotaciones del propio usuario.
+
+Cómo probarla:
+1. Toca "Comenzar" y luego "Crear cuenta", o inicia sesión con la cuenta de prueba de abajo.
+2. Toca "Nueva meta", escribe un nombre (ej. "Viaje") y un monto (ej. 2.500.000), elige la moneda y guarda.
+3. En la meta, toca "Aportar", escribe un monto y registra. La barra de progreso y el historial se actualizan.
+4. Perfil (ícono arriba a la derecha) > "Eliminar mi cuenta" elimina la cuenta y todos los datos.
+
+El registro pide fecha de nacimiento solo para confirmar que la persona tiene 18 años o más. El administrador del servicio solo ve un resumen (nombre, país, cuántas metas y su avance), no el detalle de los aportes.
 ```
 
----
-
-## 📝 Categoría
-
-- **Categoría principal:** `Finance`... **NO** — igual que en Play Store, evita "Finance": activa escrutinio extra de la Guideline 5.1.1(ix) (servicios financieros regulados) sin que la app realmente lo sea.
-- **Usa en su lugar:** `Productivity` (categoría principal) — `Utilities` es la alternativa si Productivity no calza con el resto de tu catálogo.
-
----
-
-## ✅ CHECK FINAL
-
-- [ ] Nombre: `AM Cuenta`
-- [ ] Subtítulo (30 chars)
-- [ ] Texto promocional (170 chars)
-- [ ] Descripción (~1,750 chars)
-- [ ] Keywords (~68 bytes)
-- [ ] URL de soporte funcional
-- [ ] Copyright
-- [ ] Categoría: Productivity (no Finance)
-- [ ] Ícono 1024×1024 subido (`graficos/icon-1024.png`)
-- [ ] Screenshots de iPhone 6.9" subidos (`graficos/`)
-- [ ] App Privacy respondida (ver `app-privacy-respuestas.md`)
-- [ ] Age Rating respondida (ver `age-rating-respuestas.md`)
-- [ ] Cuenta de demo + notas para el revisor (ver `README.md`)
-- [ ] Build compilado con Xcode 26 / SDK iOS 26 (obligatorio desde el 28 abr 2026)
+> **Cuenta de prueba:** crea una cuenta nueva solo para el revisor (por ejemplo `revisor@tu-dominio.com`) y pega aquí el correo y la contraseña en el campo "Sign-in required" de App Store Connect. **No pongas tus claves reales.**
