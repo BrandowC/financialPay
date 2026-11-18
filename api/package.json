@@ -23,6 +23,9 @@
     "db:studio": "prisma studio",
     "db:seed": "ts-node --transpile-only src/scripts/seed.ts",
     "db:seed:prod": "node dist/src/scripts/seed.js",
+    "db:backup": "ts-node --transpile-only src/scripts/backup-export.ts",
+    "db:purge-legacy": "ts-node --transpile-only src/scripts/purge-legacy.ts",
+    "admin:set-password": "ts-node --transpile-only src/scripts/admin-set-password.ts",
     "db:reset": "prisma migrate reset --force"
   },
   "prisma": {

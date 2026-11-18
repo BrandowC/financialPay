@@ -14,7 +14,7 @@ export default function Index() {
     );
   }
 
-  const href: Href = isAuthenticated ? '/(app)/account' : ('/welcome' as Href);
+  const href: Href = isAuthenticated ? '/(app)/home' : ('/welcome' as Href);
   return <Redirect href={href} />;
 }
 

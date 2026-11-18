@@ -1,100 +1,89 @@
 import { ValidationError } from '../errors/domain.error';
 
 /**
- * Número de celular de Estados Unidos.
+ * Número de celular internacional.
  *
- * La app está restringida a EE. UU. (así estaba el formulario original), así
- * que en vez de arrastrar una librería de 200 KB como libphonenumber, se
- * implementan las reglas reales del Plan de Numeración de Norteamérica (NANP),
- * que son pocas y estables:
+ * La app ya no se limita a Estados Unidos: cada persona elige su país y la app
+ * manda el prefijo (`+57`, `+34`, `+1`...) por un lado y el número nacional por
+ * otro. En vez de arrastrar libphonenumber (200 KB y reglas por país que casi
+ * nadie necesita aquí) se validan las reglas universales del plan E.164 de la
+ * UIT, que son pocas y estables:
  *
- *   Formato: NXX-NXX-XXXX  (10 dígitos)
- *     · El código de área no empieza por 0 ni por 1.
- *     · El prefijo central tampoco empieza por 0 ni por 1.
- *     · 555-01XX está reservado para ficción (se rechaza: es dato falso).
- *     · N11 (411, 911…) son códigos de servicio, no números de abonado.
+ *   · El prefijo es `+` y de 1 a 4 dígitos, sin ceros a la izquierda.
+ *   · Prefijo + número nacional suman como máximo 15 dígitos.
+ *   · El número nacional tiene al menos 7 dígitos (es también el mínimo de la
+ *     restricción `profiles_phone_chk` de la base de datos).
+ *   · Un número con todos los dígitos iguales ("0000000", "1111111") es
+ *     basura casi seguro, y se rechaza.
  *
- * Validar esto de verdad importa: si el número es basura, el cliente del
- * negocio no puede contactar a la persona que se registró, y ese es
- * literalmente el propósito del Excel.
+ * Validar esto de verdad importa: con un teléfono falso no hay cómo ayudar a
+ * la persona si pierde el acceso a su cuenta.
  */
-export class UsPhoneNumber {
-  static readonly COUNTRY_CODE = '+1';
-  static readonly DIGITS = 10;
+export class PhoneNumber {
+  static readonly MIN_NATIONAL_DIGITS = 7;
+  static readonly MAX_TOTAL_DIGITS = 15;
 
-  private constructor(readonly nationalNumber: string) {
+  private constructor(
+    /** "+57" */
+    readonly dialCode: string,
+    /** Solo dígitos, sin prefijo de país. */
+    readonly nationalNumber: string,
+  ) {
     Object.freeze(this);
   }
 
-  static create(input: string): UsPhoneNumber {
-    if (typeof input !== 'string') {
+  static create(dialCode: string, nationalInput: string): PhoneNumber {
+    if (typeof dialCode !== 'string' || typeof nationalInput !== 'string') {
       throw new ValidationError('El número de celular es obligatorio', 'PHONE_REQUIRED');
     }
 
-    // Acepta como venga: "(301) 555-1234", "301-555-1234", "+1 301 555 1234".
-    let digits = input.replace(/\D/g, '');
-
-    // Quita el prefijo de país si el usuario lo escribió.
-    if (digits.length === 11 && digits.startsWith('1')) {
-      digits = digits.slice(1);
+    const dial = dialCode.trim();
+    if (!/^\+[1-9]\d{0,3}$/.test(dial)) {
+      throw new ValidationError('El prefijo del país no es válido', 'PHONE_INVALID_DIAL_CODE', {
+        received: dialCode,
+      });
     }
+
+    // Acepta como venga: "(301) 555-1234", "301 555 1234", "301-555-1234".
+    const digits = nationalInput.replace(/\D/g, '');
 
     if (digits.length === 0) {
       throw new ValidationError('El número de celular es obligatorio', 'PHONE_REQUIRED');
     }
 
-    if (digits.length !== UsPhoneNumber.DIGITS) {
+    if (digits.length < PhoneNumber.MIN_NATIONAL_DIGITS) {
       throw new ValidationError(
-        'El número debe tener 10 dígitos (Estados Unidos)',
-        'PHONE_INVALID_LENGTH',
+        `El número debe tener al menos ${PhoneNumber.MIN_NATIONAL_DIGITS} dígitos`,
+        'PHONE_TOO_SHORT',
         { received: digits.length },
       );
     }
 
-    const areaCode = digits.slice(0, 3);
-    const exchange = digits.slice(3, 6);
-    const line = digits.slice(6);
-
-    if (areaCode[0] === '0' || areaCode[0] === '1') {
-      throw new ValidationError(
-        'El código de área no es válido en Estados Unidos',
-        'PHONE_INVALID_AREA_CODE',
-      );
+    if (dial.length - 1 + digits.length > PhoneNumber.MAX_TOTAL_DIGITS) {
+      throw new ValidationError('El número es demasiado largo', 'PHONE_TOO_LONG', {
+        received: digits.length,
+      });
     }
 
-    if (exchange[0] === '0' || exchange[0] === '1') {
-      throw new ValidationError('El número no es válido', 'PHONE_INVALID_EXCHANGE');
+    if (/^(\d)\1+$/.test(digits)) {
+      throw new ValidationError('Escribe tu número real', 'PHONE_INVALID');
     }
 
-    // 411, 911, 611… son servicios, nunca abonados.
-    if (areaCode[1] === '1' && areaCode[2] === '1') {
-      throw new ValidationError('Ese es un código de servicio, no un celular', 'PHONE_SERVICE_CODE');
-    }
-
-    // 555-0100 a 555-0199 están reservados para cine y documentación.
-    if (exchange === '555' && line.startsWith('01')) {
-      throw new ValidationError(
-        'Ese número está reservado para ejemplos. Escribe tu número real.',
-        'PHONE_RESERVED_FICTIONAL',
-      );
-    }
-
-    return new UsPhoneNumber(digits);
+    return new PhoneNumber(dial, digits);
   }
 
-  /** "+13015551234" — canónico E.164, el que se guarda y se exporta. */
+  /** "+573015551234" — canónico E.164. */
   toE164(): string {
-    return `${UsPhoneNumber.COUNTRY_CODE}${this.nationalNumber}`;
+    return `${this.dialCode}${this.nationalNumber}`;
   }
 
-  /** "(301) 555-1234" — para mostrar en el panel administrativo. */
+  /** "+57 3015551234" — para mostrar en el panel administrativo. */
   format(): string {
-    const d = this.nationalNumber;
-    return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+    return `${this.dialCode} ${this.nationalNumber}`;
   }
 
-  equals(other: UsPhoneNumber): boolean {
-    return this.nationalNumber === other.nationalNumber;
+  equals(other: PhoneNumber): boolean {
+    return this.dialCode === other.dialCode && this.nationalNumber === other.nationalNumber;
   }
 
   toString(): string {

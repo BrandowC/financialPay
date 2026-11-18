@@ -17,19 +17,10 @@ export class PrismaCustomerRepository implements CustomerRepository {
   /**
    * Alta completa en una sola transacción:
    *   1. `generate_account_number()` — función de Postgres que reintenta ante
-   *      colisión (ver migración 002).
+   *      colisión (ver migración 002). El número es un identificador interno
+   *      de la cuenta: la app ya no lo muestra.
    *   2. `users`
    *   3. `profiles`
-   *   4. `balances` en 0
-   *   5. evento de outbox `customer.registered` → Google Sheets
-   *   6. fila en `registration_ledger` — registro permanente, sobrevive
-   *      aunque el cliente elimine la cuenta después (ver migración
-   *      20260916000000)
-   *
-   * Los pasos 5 y 6 son la clave de "que quede guardado apenas se registra,
-   * pase lo que pase después". Al ir dentro de la misma transacción, es
-   * imposible que un cliente quede registrado sin su evento pendiente o sin
-   * su fila permanente. Si Google está caído, el evento espera; no se pierde.
    */
   async create(input: CreateCustomerInput): Promise<CustomerRecord> {
     return this.prisma.$transaction(async (tx) => {
@@ -46,48 +37,14 @@ export class PrismaCustomerRepository implements CustomerRepository {
             create: {
               fullName: input.fullName.value,
               birthDate: new Date(input.birthDate.toISODate()),
-              phoneCountryCode: '+1',
+              countryCode: input.countryCode,
+              phoneCountryCode: input.phone.dialCode,
               phoneNumber: input.phone.nationalNumber,
               accountNumber,
             },
           },
-          balance: {
-            create: { amountCents: 0n, currency: 'USD', version: 0 },
-          },
         },
         include: { profile: true },
-      });
-
-      await tx.outboxEvent.create({
-        data: {
-          aggregateType: 'customer',
-          aggregateId: user.id,
-          eventType: 'customer.registered',
-          payload: {
-            userId: user.id,
-            accountNumber,
-            fullName: input.fullName.value,
-            email: input.email.value,
-            birthDate: input.birthDate.toISODate(),
-            phone: input.phone.toE164(),
-            phoneFormatted: input.phone.format(),
-            registeredAt: user.createdAt.toISOString(),
-            balanceDecimal: '0.00',
-            currency: 'USD',
-          },
-        },
-      });
-
-      await tx.registrationLedger.create({
-        data: {
-          userId: user.id,
-          accountNumber,
-          fullName: input.fullName.value,
-          email: input.email.value,
-          phone: input.phone.format(),
-          birthDate: new Date(input.birthDate.toISODate()),
-          registeredAt: user.createdAt,
-        },
       });
 
       return PrismaCustomerRepository.toRecord(user, user.profile!);
@@ -213,43 +170,19 @@ export class PrismaCustomerRepository implements CustomerRepository {
   /**
    * Borrado real, no lógico.
    *
-   * Google Play exige que "eliminar cuenta" elimine los datos de verdad. Un
-   * `deleted_at` no cumple: los datos siguen ahí. El ON DELETE CASCADE del
-   * esquema arrastra perfil, saldo, historial de auditoría y tokens.
-   *
-   * Antes de borrar se encola el evento para que el Excel también refleje la
-   * baja; si se encolara después, el CASCADE ya habría borrado la fila y no
-   * habría datos que enviar.
+   * Google Play y App Store exigen que "eliminar cuenta" elimine los datos de
+   * verdad. Un `deleted_at` no cumple: los datos siguen ahí. El ON DELETE
+   * CASCADE del esquema arrastra perfil, metas, aportes y tokens.
    *
    * ── `app.allow_account_erasure` ──────────────────────────────────────────
-   * `balance_audit` es inmutable por trigger (nadie puede borrar el historial
-   * de un cliente que sigue existiendo — ver migración 20260102000000). Pero
-   * el CASCADE de este DELETE también intenta borrar las filas de auditoría
-   * del cliente, y ese mismo trigger lo bloqueaba, así que la cuenta de
-   * cualquiera que ya hubiera tenido un cambio de saldo no se podía eliminar
-   * (ver migración 20260915000000). Esta variable de sesión es la única
-   * llave que abre esa puerta, y solo vive dentro de esta transacción.
+   * Las cuentas que vienen de la app anterior pueden tener filas en
+   * `balance_audit`, que es inmutable por trigger. El CASCADE de este DELETE
+   * también intenta borrarlas y ese trigger lo bloquearía (ver migración
+   * 20260915000000). Esta variable de sesión es la llave que abre esa puerta,
+   * y solo vive dentro de esta transacción.
    */
   async hardDelete(id: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      const profile = await tx.profile.findUnique({
-        where: { userId: id },
-        select: { accountNumber: true },
-      });
-
-      await tx.outboxEvent.create({
-        data: {
-          aggregateType: 'customer',
-          aggregateId: id,
-          eventType: 'customer.deleted',
-          payload: {
-            userId: id,
-            accountNumber: profile?.accountNumber ?? null,
-            deletedAt: new Date().toISOString(),
-          },
-        },
-      });
-
       await tx.$executeRaw`SELECT set_config('app.allow_account_erasure', 'true', true)`;
       await tx.user.delete({ where: { id } });
     });
@@ -271,6 +204,7 @@ export class PrismaCustomerRepository implements CustomerRepository {
       fullName: string;
       accountNumber: string;
       birthDate: Date;
+      countryCode: string | null;
       phoneCountryCode: string;
       phoneNumber: string;
     },
@@ -281,6 +215,7 @@ export class PrismaCustomerRepository implements CustomerRepository {
       fullName: profile.fullName,
       accountNumber: profile.accountNumber,
       birthDate: profile.birthDate.toISOString().slice(0, 10),
+      countryCode: profile.countryCode,
       phoneCountryCode: profile.phoneCountryCode,
       phoneNumber: profile.phoneNumber,
       status: user.status as CustomerRecord['status'],

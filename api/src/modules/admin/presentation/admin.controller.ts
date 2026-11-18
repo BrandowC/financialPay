@@ -1,15 +1,12 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Inject,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
-  Patch,
   Post,
   Query,
   Req,
@@ -27,17 +24,12 @@ import {
 } from '../../../shared/infrastructure/http/auth.guard';
 import { clientIp } from '../../../shared/infrastructure/http/client-ip';
 import { PrismaService } from '../../../shared/infrastructure/persistence/prisma.service';
-import { UpdateBalanceDto } from '../../auth/presentation/auth.dto';
 import { TOKEN_SERVICE, TokenService } from '../../auth/application/ports/token.port';
-import {
-  BALANCE_REPOSITORY,
-  BalanceRepository,
-} from '../../balances/application/ports/balance.repository';
-import { UpdateBalanceUseCase } from '../../balances/application/use-cases/update-balance.use-case';
 import { AdminLoginUseCase } from '../application/admin-login.use-case';
+import { ChangeAdminPasswordUseCase } from '../application/change-admin-password.use-case';
 import { CustomerQueryService } from '../application/customer-query.service';
 import { ExcelExportService } from '../application/excel-export.service';
-import { AdminLoginDto, ListCustomersDto } from './admin.dto';
+import { AdminLoginDto, ChangePasswordDto, ListCustomersDto } from './admin.dto';
 
 const ACCESS_COOKIE = 'admin_access_token';
 const REFRESH_COOKIE = 'admin_refresh_token';
@@ -47,10 +39,9 @@ const REFRESH_COOKIE = 'admin_refresh_token';
 export class AdminController {
   constructor(
     private readonly adminLogin: AdminLoginUseCase,
+    private readonly changePassword: ChangeAdminPasswordUseCase,
     private readonly customers: CustomerQueryService,
-    private readonly updateBalance: UpdateBalanceUseCase,
     private readonly excel: ExcelExportService,
-    @Inject(BALANCE_REPOSITORY) private readonly balances: BalanceRepository,
     @Inject(TOKEN_SERVICE) private readonly tokens: TokenService,
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
@@ -140,11 +131,39 @@ export class AdminController {
     return { success: true, data: admin };
   }
 
+  /**
+   * Cambio de contraseña. Cierra todas las sesiones del administrador, así que
+   * se limpian también las cookies de esta: hay que volver a entrar.
+   */
+  @Post('auth/change-password')
+  @RequireAdmin()
+  @Throttle({ adminPassword: { limit: 5, ttl: 900_000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cambiar la contraseña del administrador' })
+  async changeOwnPassword(
+    @Body() dto: ChangePasswordDto,
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    await this.changePassword.execute({
+      adminId: request.principal!.id,
+      currentPassword: dto.currentPassword,
+      newPassword: dto.newPassword,
+      ip: clientIp(request),
+      userAgent: request.headers['user-agent'] ?? null,
+    });
+
+    this.clearAuthCookies(response);
+
+    // Con cuerpo (y no 204) para que el panel lea la respuesta igual que las demás.
+    return { success: true, data: { changed: true } };
+  }
+
   // ── Tablero ───────────────────────────────────────────────────────────────
 
   @Get('dashboard')
   @RequireAdmin()
-  @ApiOperation({ summary: 'Métricas generales y estado de la sincronización' })
+  @ApiOperation({ summary: 'Métricas generales: personas, metas y lo ahorrado' })
   async dashboard() {
     return { success: true, data: await this.customers.dashboardStats() };
   }
@@ -153,7 +172,7 @@ export class AdminController {
 
   @Get('customers')
   @RequireAdmin()
-  @ApiOperation({ summary: 'Listado paginado de clientes con búsqueda' })
+  @ApiOperation({ summary: 'Listado paginado de personas registradas, con búsqueda' })
   async list(@Query() query: ListCustomersDto) {
     const result = await this.customers.list({
       search: query.search,
@@ -161,8 +180,8 @@ export class AdminController {
       pageSize: query.pageSize,
       sortBy: query.sortBy,
       sortDir: query.sortDir,
-      onlyWithBalance: query.onlyWithBalance,
-      onlyWithoutBalance: query.onlyWithoutBalance,
+      onlyWithGoals: query.onlyWithGoals,
+      onlyWithoutGoals: query.onlyWithoutGoals,
       period: query.period,
     });
 
@@ -176,110 +195,30 @@ export class AdminController {
 
   @Get('customers/:id')
   @RequireAdmin()
-  @ApiOperation({ summary: 'Ficha de un cliente' })
+  @ApiOperation({ summary: 'Ficha de una persona, con el resumen de sus metas' })
   @ApiResponse({ status: 404, description: 'No existe' })
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const customer = await this.customers.findOne(id);
     if (!customer) throw new NotFoundError('Cliente', 'CUSTOMER_NOT_FOUND');
 
-    return { success: true, data: customer };
-  }
+    const goals = await this.customers.goalsOf(id);
 
-  /**
-   * LA operación del panel: cambiar el valor de un cliente.
-   *
-   * Es PATCH y no PUT porque solo modifica el saldo, no reemplaza el recurso
-   * completo. Y exige `expectedVersion` en el cuerpo: sin ese dato la petición
-   * se rechaza, así que es imposible sobrescribir a ciegas el cambio de otro
-   * administrador.
-   */
-  @Patch('customers/:id/balance')
-  @RequireAdmin()
-  @Throttle({ balanceUpdate: { limit: 60, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Actualizar el saldo de un cliente' })
-  @ApiResponse({ status: 200, description: 'Saldo actualizado' })
-  @ApiResponse({ status: 403, description: 'Rol sin permiso de escritura' })
-  @ApiResponse({ status: 409, description: 'Otro administrador cambió el saldo primero' })
-  async setBalance(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateBalanceDto,
-    @Req() request: AuthenticatedRequest,
-  ) {
-    const principal = request.principal!;
-
-    const result = await this.updateBalance.execute({
-      customerId: id,
-      amount: dto.amount,
-      expectedVersion: dto.expectedVersion,
-      reason: dto.reason,
-      actor: {
-        id: principal.id,
-        // El correo no viaja en el token (se mantiene mínimo), así que se lee
-        // de la ficha del administrador para la auditoría.
-        email: await this.adminEmail(principal.id),
-        role: (principal.role ?? 'OPERATOR') as 'SUPER_ADMIN' | 'OPERATOR' | 'VIEWER',
-      },
-      ip: clientIp(request),
-      userAgent: request.headers['user-agent'] ?? null,
-    });
-
-    return {
-      success: true,
-      data: {
-        changed: result.changed,
-        previous: result.previous.toDecimalString(),
-        current: result.balance.money.toDecimalString(),
-        formatted: result.balance.money.format(),
-        version: result.balance.version,
-        updatedAt: result.balance.updatedAt.toISOString(),
-      },
-    };
-  }
-
-  @Get('customers/:id/history')
-  @RequireAdmin()
-  @ApiOperation({ summary: 'Historial de cambios de saldo de un cliente' })
-  async history(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('pageSize', new DefaultValuePipe(20), ParseIntPipe) pageSize: number,
-  ) {
-    const safePageSize = Math.min(Math.max(pageSize, 1), 100);
-    const safePage = Math.max(page, 1);
-
-    const [entries, total] = await Promise.all([
-      this.balances.findHistory(id, safePageSize, (safePage - 1) * safePageSize),
-      this.balances.countHistory(id),
-    ]);
-
-    return {
-      success: true,
-      data: entries.map((e) => ({
-        id: e.id,
-        previous: e.previous.toDecimalString(),
-        current: e.current.toDecimalString(),
-        delta: e.deltaCents,
-        changedBy: e.changedByEmail,
-        reason: e.reason,
-        at: e.createdAt.toISOString(),
-      })),
-      meta: { total, page: safePage, pageSize: safePageSize },
-    };
+    return { success: true, data: { ...customer, goals } };
   }
 
   // ── Exportación ───────────────────────────────────────────────────────────
 
   /**
-   * Descarga de todos los clientes en .xlsx.
+   * Descarga de todas las personas registradas en .xlsx.
    *
    * El límite es bajo (3 por hora) porque cada exportación recorre la tabla
    * entera. También es la operación más sensible del panel: se lleva los datos
-   * personales de toda la base en un archivo, así que queda registrada.
+   * personales de toda la base en un archivo.
    */
   @Get('export/customers.xlsx')
   @RequireAdmin()
   @Throttle({ export: { limit: 3, ttl: 3_600_000 } })
-  @ApiOperation({ summary: 'Descargar en Excel los clientes registrados en los últimos 8 días' })
+  @ApiOperation({ summary: 'Descargar en Excel las personas registradas' })
   async exportExcel(@Res() response: Response): Promise<void> {
     response.setHeader(
       'Content-Type',
@@ -294,42 +233,6 @@ export class AdminController {
     response.setHeader('Transfer-Encoding', 'chunked');
 
     await this.excel.streamToResponse(response);
-  }
-
-  /**
-   * Historial completo de registros, incluidas las cuentas ya eliminadas.
-   *
-   * Es un endpoint aparte de `export/customers.xlsx` a propósito: aquél lee
-   * de las tablas vivas (últimos 8 días, con saldo y estado); este lee de
-   * `registration_ledger`, un registro permanente que no se borra ni se
-   * actualiza jamás — por eso no lleva saldo ni estado, esos datos dejan de
-   * existir cuando la cuenta se borra.
-   */
-  @Get('export/registrations.xlsx')
-  @RequireAdmin()
-  @Throttle({ exportLedger: { limit: 3, ttl: 3_600_000 } })
-  @ApiOperation({ summary: 'Descargar el historial completo de registros (incluye cuentas eliminadas)' })
-  async exportRegistrations(@Res() response: Response): Promise<void> {
-    response.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
-    response.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${ExcelExportService.ledgerFileName()}"`,
-    );
-    response.setHeader('Transfer-Encoding', 'chunked');
-
-    await this.excel.streamRegistrationLedgerToResponse(response);
-  }
-
-  /** El token no lleva el correo (se mantiene mínimo), así que se lee aquí. */
-  private async adminEmail(adminId: string): Promise<string> {
-    const found = await this.prisma.adminUser.findUnique({
-      where: { id: adminId },
-      select: { email: true },
-    });
-    return found?.email ?? 'desconocido';
   }
 
   // ── Cookies de sesión ───────────────────────────────────────────────────────

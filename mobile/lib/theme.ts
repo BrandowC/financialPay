@@ -1,5 +1,5 @@
 /**
- * Sistema de diseño de AM Cuenta.
+ * Sistema de diseño de Metas.
  *
  * Centralizar esto en un solo archivo es lo que permite que las cuatro
  * pantallas se vean como UN producto y no como cuatro pantallas hechas en

@@ -1,26 +1,36 @@
 /** Formas de datos que la API devuelve. Deben reflejar exactamente los DTOs
  *  de salida del backend (ver admin.controller.ts y customer-query.service.ts). */
 
-export interface MoneyDto {
-  cents: string;
-  decimal: string;
-  formatted: string;
-  currency: string;
-}
-
 export interface CustomerListItemDto {
   userId: string;
   fullName: string;
   email: string;
-  accountNumber: string;
+  /** País de residencia (ISO). Nulo en las cuentas anteriores a Metas. */
+  countryCode: string | null;
   phone: string;
   birthDate: string;
   registeredAt: string;
   lastLoginAt: string | null;
   status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
-  balance: MoneyDto;
-  balanceVersion: number;
-  balanceUpdatedAt: string | null;
+  goalsCount: number;
+  completedGoalsCount: number;
+}
+
+export interface CustomerGoalDto {
+  id: string;
+  name: string;
+  emoji: string | null;
+  currency: string;
+  /** Centavos como texto. */
+  targetCents: string;
+  savedCents: string;
+  completed: boolean;
+  archived: boolean;
+  createdAt: string;
+}
+
+export interface CustomerDetailDto extends CustomerListItemDto {
+  goals: CustomerGoalDto[];
 }
 
 export interface PagedMeta {
@@ -34,20 +44,12 @@ export interface DashboardStatsDto {
   totalCustomers: number;
   registeredToday: number;
   registeredThisMonth: number;
-  totalBalance: { decimal: string; formatted: string };
-  customersWithBalance: number;
-  pendingSyncEvents: number;
-  deadSyncEvents: number;
-}
-
-export interface BalanceHistoryEntryDto {
-  id: string;
-  previous: string;
-  current: string;
-  delta: string;
-  changedBy: string | null;
-  reason: string | null;
-  at: string;
+  customersWithGoals: number;
+  totalGoals: number;
+  completedGoals: number;
+  /** Lo ahorrado por moneda: sumar monedas distintas no tiene sentido. */
+  savedByCurrency: Array<{ currency: string; savedCents: string; goals: number }>;
+  byCountry: Array<{ countryCode: string | null; customers: number }>;
 }
 
 export interface AdminSessionDto {

@@ -4,21 +4,23 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useCustomers } from '@/hooks/use-customers';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { useExportExcel, useExportRegistrationLedger } from '@/hooks/use-export';
+import { useExportExcel } from '@/hooks/use-export';
 import { Avatar } from '@/components/ui/Avatar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { formatDateShort, timeAgo } from '@/lib/format';
+import { countryName, formatDateShort, timeAgo } from '@/lib/format';
 import { toast } from '@/lib/toast-store';
 
 const PAGE_SIZE = 20;
 
+type SortColumn = 'registeredAt' | 'fullName' | 'goalsCount' | 'lastLoginAt';
+
 export default function CustomersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<'registeredAt' | 'fullName' | 'amountCents'>('registeredAt');
+  const [sortBy, setSortBy] = useState<SortColumn>('registeredAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [onlyWithBalance, setOnlyWithBalance] = useState(false);
-  const [onlyWithoutBalance, setOnlyWithoutBalance] = useState(false);
+  const [onlyWithGoals, setOnlyWithGoals] = useState(false);
+  const [onlyWithoutGoals, setOnlyWithoutGoals] = useState(false);
   const [onlyToday, setOnlyToday] = useState(false);
 
   const debouncedSearch = useDebouncedValue(search);
@@ -29,13 +31,12 @@ export default function CustomersPage() {
     pageSize: PAGE_SIZE,
     sortBy,
     sortDir,
-    onlyWithBalance,
-    onlyWithoutBalance,
+    onlyWithGoals,
+    onlyWithoutGoals,
     period: onlyToday ? 'today' : undefined,
   });
 
   const exportExcel = useExportExcel();
-  const exportLedger = useExportRegistrationLedger();
 
   function toggleSort(column: typeof sortBy) {
     if (sortBy === column) {
@@ -54,13 +55,6 @@ export default function CustomersPage() {
     });
   }
 
-  function handleExportLedger() {
-    exportLedger.mutate(undefined, {
-      onSuccess: () => toast({ variant: 'success', title: 'Historial descargado' }),
-      onError: () => toast({ variant: 'error', title: 'No se pudo generar el archivo' }),
-    });
-  }
-
   const customers = data?.data ?? [];
   const meta = data?.meta;
 
@@ -68,9 +62,9 @@ export default function CustomersPage() {
     <div className="animate-fade-in">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-950">Clientes</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-brand-950">Personas</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {meta ? `${meta.total.toLocaleString('es-CO')} cliente(s) registrado(s)` : 'Cargando…'}
+            {meta ? `${meta.total.toLocaleString('es-CO')} persona(s) registrada(s)` : 'Cargando…'}
           </p>
         </div>
 
@@ -85,21 +79,7 @@ export default function CustomersPage() {
             ) : (
               <ExcelIcon className="h-4 w-4 text-emerald-600" />
             )}
-            {exportExcel.isPending ? 'Generando…' : 'Descargar Excel (últimos 8 días)'}
-          </button>
-
-          <button
-            onClick={handleExportLedger}
-            disabled={exportLedger.isPending}
-            title="Incluye cuentas ya eliminadas — es un registro permanente"
-            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-brand-950 shadow-sm transition-colors hover:bg-surface-100 disabled:opacity-50"
-          >
-            {exportLedger.isPending ? (
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" />
-            ) : (
-              <ExcelIcon className="h-4 w-4 text-emerald-600" />
-            )}
-            {exportLedger.isPending ? 'Generando…' : 'Descargar historial completo de registros'}
+            {exportExcel.isPending ? 'Generando…' : 'Descargar Excel'}
           </button>
         </div>
       </header>
@@ -113,7 +93,7 @@ export default function CustomersPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Buscar por nombre, correo, cuenta o teléfono…"
+            placeholder="Buscar por nombre, correo o teléfono…"
             className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition-shadow focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
           />
         </div>
@@ -121,31 +101,31 @@ export default function CustomersPage() {
         <label className="flex select-none items-center gap-2 text-sm text-gray-600">
           <input
             type="checkbox"
-            checked={onlyWithBalance}
+            checked={onlyWithGoals}
             onChange={(e) => {
-              setOnlyWithBalance(e.target.checked);
-              // Mutuamente excluyente con "Solo sin saldo": ambos a la vez no
-              // devolverían ningún cliente.
-              if (e.target.checked) setOnlyWithoutBalance(false);
+              setOnlyWithGoals(e.target.checked);
+              // Mutuamente excluyente con "Sin metas": ambos a la vez no
+              // devolverían a nadie.
+              if (e.target.checked) setOnlyWithoutGoals(false);
               setPage(1);
             }}
             className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500/30"
           />
-          Solo con saldo
+          Con metas
         </label>
 
         <label className="flex select-none items-center gap-2 text-sm text-gray-600">
           <input
             type="checkbox"
-            checked={onlyWithoutBalance}
+            checked={onlyWithoutGoals}
             onChange={(e) => {
-              setOnlyWithoutBalance(e.target.checked);
-              if (e.target.checked) setOnlyWithBalance(false);
+              setOnlyWithoutGoals(e.target.checked);
+              if (e.target.checked) setOnlyWithGoals(false);
               setPage(1);
             }}
             className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500/30"
           />
-          Solo sin saldo
+          Sin metas
         </label>
 
         <label className="flex select-none items-center gap-2 text-sm text-gray-600">
@@ -167,10 +147,10 @@ export default function CustomersPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-surface-200 text-xs uppercase tracking-wide text-gray-400">
-                <SortableHeader label="Cliente" column="fullName" current={sortBy} dir={sortDir} onSort={toggleSort} />
-                <th className="px-5 py-3 font-medium">Cuenta</th>
+                <SortableHeader label="Persona" column="fullName" current={sortBy} dir={sortDir} onSort={toggleSort} />
+                <th className="px-5 py-3 font-medium">País</th>
                 <th className="px-5 py-3 font-medium">Contacto</th>
-                <SortableHeader label="Saldo" column="amountCents" current={sortBy} dir={sortDir} onSort={toggleSort} align="right" />
+                <SortableHeader label="Metas" column="goalsCount" current={sortBy} dir={sortDir} onSort={toggleSort} align="right" />
                 <SortableHeader label="Registro" column="registeredAt" current={sortBy} dir={sortDir} onSort={toggleSort} />
                 <th className="px-5 py-3 font-medium">Estado</th>
               </tr>
@@ -200,10 +180,15 @@ export default function CustomersPage() {
                           </div>
                         </Link>
                       </td>
-                      <td className="px-5 py-3 font-mono text-xs text-gray-500">{customer.accountNumber}</td>
+                      <td className="px-5 py-3 text-gray-600">{countryName(customer.countryCode)}</td>
                       <td className="px-5 py-3 text-gray-600">{customer.phone}</td>
                       <td className="px-5 py-3 text-right font-semibold text-brand-950">
-                        {customer.balance.formatted}
+                        {customer.goalsCount}
+                        {customer.completedGoalsCount > 0 && (
+                          <span className="ml-1 text-xs font-medium text-emerald-600">
+                            ({customer.completedGoalsCount} cumplida{customer.completedGoalsCount === 1 ? '' : 's'})
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-3 text-gray-500" title={formatDateShort(customer.registeredAt)}>
                         {timeAgo(customer.registeredAt)}
@@ -217,7 +202,7 @@ export default function CustomersPage() {
               {!isLoading && customers.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-5 py-16 text-center text-gray-400">
-                    No se encontraron clientes{debouncedSearch ? ` para "${debouncedSearch}"` : ''}.
+                    No se encontraron personas{debouncedSearch ? ` para "${debouncedSearch}"` : ''}.
                   </td>
                 </tr>
               )}
@@ -262,10 +247,10 @@ function SortableHeader({
   align = 'left',
 }: {
   label: string;
-  column: 'registeredAt' | 'fullName' | 'amountCents';
+  column: SortColumn;
   current: string;
   dir: 'asc' | 'desc';
-  onSort: (c: 'registeredAt' | 'fullName' | 'amountCents') => void;
+  onSort: (c: SortColumn) => void;
   align?: 'left' | 'right';
 }) {
   const active = current === column;

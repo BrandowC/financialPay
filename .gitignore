@@ -1,0 +1,3 @@
+# Copias de seguridad y exportaciones con datos personales: nunca al repositorio.
+*.xlsx
+*.tsbuildinfo

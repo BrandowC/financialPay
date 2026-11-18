@@ -19,7 +19,7 @@ Requiere que `../api/` esté corriendo y tenga al menos un administrador (`npm r
 ## Qué hace
 
 - Login de administrador (roles `SUPER_ADMIN` / `OPERATOR` / `VIEWER`).
-- Tablero con métricas generales y estado de la sincronización a Google Sheets.
-- Listado de clientes con búsqueda, orden y paginación.
+- Tablero con métricas generales (clientes registrados, saldo total administrado, registros del mes).
+- Listado de clientes con búsqueda, orden, paginación y filtros ("solo con saldo", "solo sin saldo", "registrados hoy").
 - Ficha de cliente: **el único lugar donde se edita el saldo**, con bloqueo optimista (si otro administrador ya guardó, se avisa y se recarga el valor real en vez de sobrescribirlo) e historial completo de cambios.
-- Exportar todos los clientes a `.xlsx`.
+- Exportar a `.xlsx`: los clientes de los últimos 8 días, o el historial completo de registros (incluye cuentas ya eliminadas — es un registro permanente).

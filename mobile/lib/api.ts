@@ -8,7 +8,7 @@ const API_URL =
 
 if (__DEV__ && API_URL.includes('localhost')) {
   console.warn(
-    '[AMCuenta] EXPO_PUBLIC_API_URL apunta a localhost. Desde un dispositivo físico ' +
+    '[Metas] EXPO_PUBLIC_API_URL apunta a localhost. Desde un dispositivo físico ' +
       'o un emulador eso no resuelve a tu máquina: usa tu IP de red local (ej. ' +
       'http://192.168.1.10:3000/api/v1) o revisa README.md.',
   );
@@ -200,11 +200,16 @@ export interface RegisterPayload {
   email: string;
   password: string;
   birthDate: string;
+  /** País de residencia, ISO 3166-1 alfa-2 ("CO"). */
+  countryCode: string;
+  /** Prefijo telefónico ("+57"). */
+  phoneCountryCode: string;
+  /** Celular sin prefijo. */
   phone: string;
 }
 
 export interface AuthResult extends Tokens {
-  customer?: { id: string; fullName: string; accountNumber: string; email: string };
+  customer?: { id: string; fullName: string; email: string };
 }
 
 export async function registerCustomer(payload: RegisterPayload): Promise<AuthResult> {
@@ -256,16 +261,9 @@ export async function logoutCustomer(): Promise<void> {
 export interface MeResponse {
   id: string;
   fullName: string;
-  accountNumber: string;
   email: string;
+  countryCode: string | null;
   memberSince: string;
-  balance: {
-    cents: string;
-    decimal: string;
-    formatted: string;
-    currency: string;
-    updatedAt: string | null;
-  };
 }
 
 export function fetchMe(): Promise<MeResponse> {
@@ -274,4 +272,79 @@ export function fetchMe(): Promise<MeResponse> {
 
 export function deleteMyAccount(): Promise<void> {
   return api.delete<void>('/me');
+}
+
+// ── Metas de ahorro ─────────────────────────────────────────────────────────
+
+export interface Goal {
+  id: string;
+  name: string;
+  emoji: string | null;
+  currency: string;
+  /** Centavos como texto. */
+  targetCents: string;
+  savedCents: string;
+  /** 0 a 1, solo para pintar la barra. */
+  progress: number;
+  completed: boolean;
+  deadline: string | null;
+  archived: boolean;
+  contributionsCount: number;
+  lastContributionOn: string | null;
+  createdAt: string;
+}
+
+export interface Contribution {
+  id: string;
+  /** Positivo = aporte, negativo = retiro. */
+  amountCents: string;
+  note: string | null;
+  madeOn: string;
+  createdAt: string;
+}
+
+export function fetchGoals(): Promise<{ goals: Goal[] }> {
+  return api.get<{ goals: Goal[] }>('/me/goals');
+}
+
+export function fetchGoal(id: string): Promise<{ goal: Goal; contributions: Contribution[] }> {
+  return api.get(`/me/goals/${id}`);
+}
+
+export function createGoal(input: {
+  name: string;
+  emoji?: string;
+  targetAmount: string;
+  currency: string;
+  deadline?: string;
+}): Promise<Goal> {
+  return api.post<Goal>('/me/goals', input);
+}
+
+export function updateGoal(
+  id: string,
+  input: {
+    name?: string;
+    emoji?: string;
+    targetAmount?: string;
+    deadline?: string | null;
+    archived?: boolean;
+  },
+): Promise<Goal> {
+  return api.patch<Goal>(`/me/goals/${id}`, input);
+}
+
+export function deleteGoal(id: string): Promise<void> {
+  return api.delete<void>(`/me/goals/${id}`);
+}
+
+export function addContribution(
+  goalId: string,
+  input: { amount: string; type: 'deposit' | 'withdrawal'; note?: string; madeOn?: string },
+): Promise<{ goal: Goal; contribution: Contribution }> {
+  return api.post(`/me/goals/${goalId}/contributions`, input);
+}
+
+export function deleteContribution(goalId: string, contributionId: string): Promise<Goal> {
+  return api.delete<Goal>(`/me/goals/${goalId}/contributions/${contributionId}`);
 }

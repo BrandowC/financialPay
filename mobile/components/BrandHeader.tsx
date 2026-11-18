@@ -9,7 +9,7 @@ type Props = {
 
 const GOLD = '#C9A961';
 
-// Logo de AM Financial. Para cambiarlo, reemplaza assets/images/Logo.png
+// Logo de Metas. Para cambiarlo, reemplaza assets/images/Logo.png
 // con un PNG cuadrado (recomendado 1024×1024) y recarga la app.
 const LOGO_SOURCE = require('../assets/images/Logo.png');
 
@@ -25,7 +25,7 @@ export function BrandHeader({ subtitle, compact }: Props) {
       />
 
       <Text style={[styles.brand, compact && styles.brandCompact]}>
-        AM Cuenta
+        Metas
       </Text>
 
       <Text style={[styles.tagline, compact && styles.taglineCompact]}>

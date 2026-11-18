@@ -1,7 +1,7 @@
 import { BirthDate } from '../../../../shared/domain/value-objects/birth-date.vo';
 import { Email } from '../../../../shared/domain/value-objects/email.vo';
 import { FullName } from '../../../../shared/domain/value-objects/full-name.vo';
-import { UsPhoneNumber } from '../../../../shared/domain/value-objects/phone-number.vo';
+import { PhoneNumber } from '../../../../shared/domain/value-objects/phone-number.vo';
 
 export const CUSTOMER_REPOSITORY = Symbol('CUSTOMER_REPOSITORY');
 
@@ -12,6 +12,8 @@ export interface CustomerRecord {
   fullName: string;
   accountNumber: string;
   birthDate: string;
+  /** País de residencia (ISO). Nulo en las cuentas anteriores a Metas. */
+  countryCode: string | null;
   phoneCountryCode: string;
   phoneNumber: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
@@ -34,7 +36,8 @@ export interface CreateCustomerInput {
   passwordHash: string;
   fullName: FullName;
   birthDate: BirthDate;
-  phone: UsPhoneNumber;
+  phone: PhoneNumber;
+  countryCode: string;
 }
 
 /**
@@ -46,15 +49,12 @@ export interface CreateCustomerInput {
  */
 export interface CustomerRepository {
   /**
-   * Crea usuario + perfil + saldo inicial + evento de outbox EN UNA SOLA
-   * TRANSACCIÓN.
+   * Crea usuario + perfil EN UNA SOLA TRANSACCIÓN.
    *
-   * Es deliberado que sea una única operación del repositorio y no cuatro
+   * Es deliberado que sea una única operación del repositorio y no varias
    * llamadas desde el caso de uso: la atomicidad es una responsabilidad de la
    * capa de persistencia. Si el sistema cayera entre la creación del usuario y
-   * la del saldo, quedaría un cliente sin saldo que la pantalla no sabría
-   * mostrar. Y si el evento de outbox se escribiera fuera de la transacción,
-   * podría registrarse un cliente que nunca llega al Excel.
+   * la del perfil, quedaría una cuenta sin datos que la app no sabría mostrar.
    */
   create(input: CreateCustomerInput): Promise<CustomerRecord>;
 
@@ -102,7 +102,7 @@ export interface CustomerRepository {
   /**
    * Borrado definitivo. Obligatorio para Google Play desde 2024: toda app con
    * cuentas debe permitir eliminarlas desde dentro. El ON DELETE CASCADE del
-   * esquema arrastra perfil, saldo, auditoría y tokens.
+   * esquema arrastra perfil, metas, aportes y tokens.
    */
   hardDelete(id: string): Promise<void>;
 }

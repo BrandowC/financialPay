@@ -12,8 +12,22 @@ import {
   Min,
 } from 'class-validator';
 
+export class ChangePasswordDto {
+  @ApiProperty({ description: 'La contraseña actual' })
+  @IsString()
+  @IsNotEmpty({ message: 'currentPassword es obligatorio' })
+  @MaxLength(128)
+  currentPassword!: string;
+
+  @ApiProperty({ description: 'La contraseña nueva (mínimo 8 caracteres)' })
+  @IsString()
+  @IsNotEmpty({ message: 'newPassword es obligatorio' })
+  @MaxLength(128)
+  newPassword!: string;
+}
+
 export class AdminLoginDto {
-  @ApiProperty({ example: 'admin@amcuenta.com' })
+  @ApiProperty({ example: 'tu-correo@ejemplo.com' })
   @IsString()
   @IsNotEmpty({ message: 'email es obligatorio' })
   @MaxLength(254)
@@ -41,7 +55,7 @@ export class AdminLoginDto {
  * directa.
  */
 export class ListCustomersDto {
-  @ApiPropertyOptional({ description: 'Busca en nombre, correo, cuenta y teléfono' })
+  @ApiPropertyOptional({ description: 'Busca en nombre, correo y teléfono' })
   @IsOptional()
   @IsString()
   @MaxLength(120)
@@ -63,28 +77,31 @@ export class ListCustomersDto {
   @Max(100)
   pageSize: number = 25;
 
-  @ApiPropertyOptional({ enum: ['registeredAt', 'fullName', 'amountCents'], default: 'registeredAt' })
+  @ApiPropertyOptional({
+    enum: ['registeredAt', 'fullName', 'goalsCount', 'lastLoginAt'],
+    default: 'registeredAt',
+  })
   @IsOptional()
-  @IsIn(['registeredAt', 'fullName', 'amountCents'])
-  sortBy: 'registeredAt' | 'fullName' | 'amountCents' = 'registeredAt';
+  @IsIn(['registeredAt', 'fullName', 'goalsCount', 'lastLoginAt'])
+  sortBy: 'registeredAt' | 'fullName' | 'goalsCount' | 'lastLoginAt' = 'registeredAt';
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortDir: 'asc' | 'desc' = 'desc';
 
-  @ApiPropertyOptional({ description: 'Solo clientes con saldo mayor que cero' })
+  @ApiPropertyOptional({ description: 'Solo personas que ya crearon al menos una meta' })
   @IsOptional()
   // Los query params llegan siempre como texto: "true" no es true.
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
-  onlyWithBalance?: boolean;
+  onlyWithGoals?: boolean;
 
-  @ApiPropertyOptional({ description: 'Solo clientes con saldo en cero' })
+  @ApiPropertyOptional({ description: 'Solo personas que todavía no crearon ninguna meta' })
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
-  onlyWithoutBalance?: boolean;
+  onlyWithoutGoals?: boolean;
 
   @ApiPropertyOptional({
     enum: ['today'],

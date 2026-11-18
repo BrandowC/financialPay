@@ -44,14 +44,14 @@ const duration = z.string().regex(/^\d+[smhd]$/, 'Formato inválido. Usa algo co
  *
  * ── Por qué hace falta esto ──────────────────────────────────────────────
  * Un `.env` real casi siempre deja las variables opcionales como
- * `GOOGLE_SERVICE_ACCOUNT_EMAIL=` (la línea existe, vacía) en vez de omitir la
- * línea por completo — es lo que queda al copiar `.env.example` y no llenar
- * ese campo. `dotenv` carga eso como `""`, no como `undefined`, y
- * `.optional()` de Zod solo exime la AUSENCIA de la clave, no una cadena
- * vacía: `z.string().email().optional()` sigue intentando validar `""` como
- * correo y falla. Sin este envoltorio, cualquier variable opcional sin
- * rellenar tumba el arranque con un error que no tiene nada que ver con lo
- * que el desarrollador hizo mal.
+ * `REDIS_URL=` (la línea existe, vacía) en vez de omitir la línea por
+ * completo — es lo que queda al copiar `.env.example` y no llenar ese campo.
+ * `dotenv` carga eso como `""`, no como `undefined`, y `.optional()` de Zod
+ * solo exime la AUSENCIA de la clave, no una cadena vacía:
+ * `z.string().url().optional()` sigue intentando validar `""` como URL y
+ * falla. Sin este envoltorio, cualquier variable opcional sin rellenar tumba
+ * el arranque con un error que no tiene nada que ver con lo que el
+ * desarrollador hizo mal.
  */
 const optional = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
@@ -93,27 +93,6 @@ export const envSchema = z
     // ser por instancia en vez de global. Ver ThrottlerStorage.
     REDIS_URL: optional(z.string().url()),
 
-    // ── Google Sheets ──────────────────────────────────────────────────────
-    // También opcional: si no está configurado, los eventos se acumulan en la
-    // tabla outbox y se procesan en cuanto se configure. Nada se pierde.
-    GOOGLE_SHEETS_ENABLED: z
-      .enum(['true', 'false'])
-      .default('false')
-      .transform((v) => v === 'true'),
-    GOOGLE_SHEETS_SPREADSHEET_ID: optional(z.string()),
-    GOOGLE_SHEETS_TAB_NAME: z.string().default('Registros'),
-    GOOGLE_SERVICE_ACCOUNT_EMAIL: optional(z.string().email()),
-    /** La clave privada del JSON de la cuenta de servicio, con \n literales. */
-    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: optional(z.string()),
-
-    // ── Worker de outbox ───────────────────────────────────────────────────
-    OUTBOX_ENABLED: z
-      .enum(['true', 'false'])
-      .default('true')
-      .transform((v) => v === 'true'),
-    OUTBOX_POLL_INTERVAL_MS: z.coerce.number().int().min(1000).default(5_000),
-    OUTBOX_BATCH_SIZE: z.coerce.number().int().min(1).max(500).default(50),
-
     // ── CORS ───────────────────────────────────────────────────────────────
     // Lista separada por comas. La app móvil no manda Origin, así que esto
     // aplica sobre todo al panel administrativo.
@@ -135,26 +114,6 @@ export const envSchema = z
           'Los secretos de access y refresh deben ser distintos. Si son iguales, ' +
           'un access token robado puede usarse como refresh token y la sesión se vuelve eterna.',
       });
-    }
-
-    if (env.GOOGLE_SHEETS_ENABLED) {
-      const missing = (
-        [
-          ['GOOGLE_SHEETS_SPREADSHEET_ID', env.GOOGLE_SHEETS_SPREADSHEET_ID],
-          ['GOOGLE_SERVICE_ACCOUNT_EMAIL', env.GOOGLE_SERVICE_ACCOUNT_EMAIL],
-          ['GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY', env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY],
-        ] as const
-      )
-        .filter(([, value]) => !value)
-        .map(([key]) => key);
-
-      if (missing.length > 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['GOOGLE_SHEETS_ENABLED'],
-          message: `GOOGLE_SHEETS_ENABLED=true pero faltan: ${missing.join(', ')}`,
-        });
-      }
     }
 
     if (env.NODE_ENV === 'production') {

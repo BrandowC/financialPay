@@ -48,3 +48,24 @@ export function useAdminLogout() {
     },
   });
 }
+
+/**
+ * Cambio de contraseña del administrador. El servidor cierra TODAS sus
+ * sesiones al cambiarla (incluida esta), así que al terminar se limpia el
+ * estado local y se manda a iniciar sesión de nuevo con la clave nueva.
+ */
+export function useChangePassword() {
+  const clear = useAuthStore((s) => s.clear);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation<{ changed: boolean }, ApiError, { currentPassword: string; newPassword: string }>({
+    mutationFn: (body) => api.post<{ changed: boolean }>('/admin/auth/change-password', body, { skipAuthRetry: true }),
+
+    onSuccess: () => {
+      clear();
+      queryClient.setQueryData(['admin-me'], null);
+      router.replace('/login');
+    },
+  });
+}

@@ -42,9 +42,9 @@ export default function LoginPage() {
       <div className="animate-fade-in relative w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-3xl font-black text-gold shadow-card ring-1 ring-white/20 backdrop-blur">
-            A
+            M
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">AM Cuenta</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white">Metas</h1>
           <p className="mt-1 text-sm font-semibold uppercase tracking-[0.2em] text-gold/80">
             Panel administrativo
           </p>
@@ -76,7 +76,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-brand-950 outline-none transition-shadow focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                placeholder="admin@amcuenta.com"
+                placeholder="tu@correo.com"
               />
             </div>
 

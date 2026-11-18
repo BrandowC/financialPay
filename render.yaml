@@ -72,26 +72,6 @@ services:
 
       # REDIS_URL deliberadamente omitida — ver nota sobre Redis arriba.
 
-      # ── Google Sheets (opcional, ver docs/google-sheets.md) ──────────────
-      - key: GOOGLE_SHEETS_ENABLED
-        value: false
-      - key: GOOGLE_SHEETS_SPREADSHEET_ID
-        sync: false
-      - key: GOOGLE_SHEETS_TAB_NAME
-        value: Registros
-      - key: GOOGLE_SERVICE_ACCOUNT_EMAIL
-        sync: false
-      - key: GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
-        sync: false
-
-      # ── Outbox (sincronización asíncrona) ─────────────────────────────────
-      - key: OUTBOX_ENABLED
-        value: true
-      - key: OUTBOX_POLL_INTERVAL_MS
-        value: 5000
-      - key: OUTBOX_BATCH_SIZE
-        value: 50
-
       # ── CORS ───────────────────────────────────────────────────────────────
       # IMPORTANTE: aunque el panel comparte origen con esta API, el navegador
       # igual manda cabecera Origin en cada POST/PATCH/DELETE del panel — así
