@@ -17,7 +17,7 @@ Monorepo del proyecto AM Cuenta (antes "FinancialPay").
 
 ## Despliegue
 
-Un solo `Dockerfile` en la raíz empaqueta la API y el panel administrativo (compilado como sitio estático) en una sola imagen — ver los comentarios del propio `Dockerfile`. `render.yaml` despliega esa imagen en [Render](https://render.com) junto con Postgres y Redis administrados: en Render, "New +" → "Blueprint" → conectar este repositorio. Después del primer deploy, hace falta:
+Un solo `Dockerfile` en la raíz empaqueta la API y el panel administrativo (compilado como sitio estático) en una sola imagen — ver los comentarios del propio `Dockerfile`. `render.yaml` despliega esa imagen en [Render](https://render.com) (la base de datos Postgres vive aparte, en Neon): en Render, "New +" → "Blueprint" → conectar este repositorio. Después del primer deploy, hace falta:
 
 1. Rellenar en el panel de Render las variables marcadas `sync: false` en `render.yaml` (secretos de JWT, el admin sembrado, y `CORS_ORIGINS`).
 2. Crear el primer administrador una sola vez desde la pestaña "Shell" del servicio: `npm run db:seed`.

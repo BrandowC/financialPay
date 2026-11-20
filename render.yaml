@@ -11,20 +11,14 @@
 # corren varias instancias, ahí sí hace falta un Redis compartido para que el
 # límite sea global y no se multiplique por instancia.
 #
-# Plan de Postgres "0.1c-256mb" (de pago, ~$6/mes): el plan gratuito de Render
-# expira a los 30 días y suspende la base de datos, por eso se subió de plan
-# (octubre 2026). No volver a "free" con datos reales de clientes.
+# Base de datos: Postgres gratuito en Neon (https://neon.tech), FUERA de este
+# Blueprint. Render solo despliega el web service; la URL de conexión de Neon
+# se pega a mano en DATABASE_URL (variable `sync: false`, abajo). Neon suspende
+# el cómputo tras ~5 min sin uso y despierta en ~1s; los datos no expiran.
 #
-# Uso: en Render, "New +" → "Blueprint", conectar este repositorio. Render lee
-# este archivo y crea los dos recursos de una vez. Las variables marcadas
-# `sync: false` no se rellenan solas — hay que ponerlas a mano en el panel de
-# Render después de crear el Blueprint (nunca deben ir committeadas al repo).
-
-databases:
-  - name: amcuenta-postgres
-    plan: 0.1c-256mb
-    databaseName: amcuenta
-    user: amcuenta
+# Uso: en Render, "New +" → "Blueprint", conectar este repositorio. Las
+# variables marcadas `sync: false` no se rellenan solas — hay que ponerlas a
+# mano en el panel de Render (nunca deben ir committeadas al repo).
 
 services:
   - type: web
@@ -45,10 +39,10 @@ services:
         value: api/v1
 
       # ── Base de datos ────────────────────────────────────────────────────
+      # URL DIRECTA de Neon (host SIN "-pooler"), con ?sslmode=require. La
+      # directa es la que soporta `prisma migrate deploy` (locks de sesión).
       - key: DATABASE_URL
-        fromDatabase:
-          name: amcuenta-postgres
-          property: connectionString
+        sync: false
       - key: DATABASE_POOL_SIZE
         value: 15
       - key: DATABASE_STATEMENT_TIMEOUT_MS
