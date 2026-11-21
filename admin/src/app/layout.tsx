@@ -7,8 +7,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Metas · Panel administrativo',
-  description: 'Panel para ver las personas registradas y las metas de ahorro de Metas',
+  title: 'AM Cuenta · Panel administrativo',
+  description: 'Panel para administrar los saldos de los clientes de AM Cuenta',
   robots: { index: false, follow: false }, // panel interno: nunca debe indexarse
 };
 

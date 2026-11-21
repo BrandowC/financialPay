@@ -1,5 +1,5 @@
 # =============================================================================
-# Metas · imagen de producción (API + panel administrativo)
+# AM Cuenta · imagen de producción (API + panel administrativo)
 # =============================================================================
 # Un solo Dockerfile, un solo servicio, una sola URL: el panel administrativo
 # (Next.js, exportado como sitio estático) se compila aparte y se copia dentro
@@ -83,9 +83,6 @@ COPY --from=build --chown=nodejs:nodejs /app/package.json ./
 # El export estático del panel, en la ruta que ServeStaticModule espera
 # (`join(__dirname, '..', 'admin-static')` desde `dist/`, o sea `/app/admin-static`).
 COPY --from=admin-build --chown=nodejs:nodejs /admin/out ./admin-static
-
-# Página pública de política de privacidad (ver ServeStaticModule en app.module.ts).
-COPY --from=build --chown=nodejs:nodejs /app/public ./public
 
 USER nodejs
 EXPOSE 3000

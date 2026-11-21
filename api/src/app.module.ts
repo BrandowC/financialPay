@@ -2,22 +2,24 @@ import { join } from 'node:path';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { validateEnv } from './config/env.schema';
 import { AdminLoginUseCase } from './modules/admin/application/admin-login.use-case';
-import { ChangeAdminPasswordUseCase } from './modules/admin/application/change-admin-password.use-case';
 import { CustomerQueryService } from './modules/admin/application/customer-query.service';
 import { ExcelExportService } from './modules/admin/application/excel-export.service';
 import { AdminController } from './modules/admin/presentation/admin.controller';
 import { LoginUseCase } from './modules/auth/application/use-cases/login.use-case';
 import { RegisterUseCase } from './modules/auth/application/use-cases/register.use-case';
 import { AuthController } from './modules/auth/presentation/auth.controller';
+import { UpdateBalanceUseCase } from './modules/balances/application/use-cases/update-balance.use-case';
 import { MeController } from './modules/customers/presentation/me.controller';
-import { GoalsService } from './modules/goals/application/goals.service';
-import { GoalsController } from './modules/goals/presentation/goals.controller';
 import { HealthController } from './modules/health/health.controller';
+import { SPREADSHEET_SYNC } from './modules/sync/application/ports/spreadsheet.port';
+import { GoogleSheetsAdapter } from './modules/sync/infrastructure/google-sheets.adapter';
+import { OutboxWorker } from './modules/sync/infrastructure/outbox.worker';
 import { AuthGuard } from './shared/infrastructure/http/auth.guard';
 import { SharedModule } from './shared/shared.module';
 
@@ -30,6 +32,9 @@ import { SharedModule } from './shared/shared.module';
       validate: validateEnv,
       cache: true,
     }),
+
+    // Tareas programadas: rescate de eventos atascados y purga nocturna.
+    ScheduleModule.forRoot(),
 
     /**
      * Rate limiting global.
@@ -69,38 +74,29 @@ import { SharedModule } from './shared/shared.module';
      * `src/`), así que hacen falta DOS niveles hacia arriba para llegar a la
      * raíz de `api/` (donde vive `admin-static/`, junto a `dist/`), no uno.
      */
-    ServeStaticModule.forRoot(
-      {
-        rootPath: join(__dirname, '..', '..', 'admin-static'),
-        serveRoot: '/admin',
-        exclude: ['/api/{*splat}', '/health', '/health/ready', '/health/live'],
-      },
-      /**
-       * Política de privacidad pública, en `/privacy`. Las tiendas (App Store y
-       * Google Play) exigen una URL pública y estable; servirla desde la propia
-       * API evita depender de un documento externo que pueda borrarse. La
-       * carpeta `public/` la copia el Dockerfile junto a `admin-static/`.
-       */
-      {
-        rootPath: join(__dirname, '..', '..', 'public', 'privacy'),
-        serveRoot: '/privacy',
-      },
-    ),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'admin-static'),
+      serveRoot: '/admin',
+      exclude: ['/api/{*splat}', '/health', '/health/ready', '/health/live'],
+    }),
 
     SharedModule,
   ],
 
-  controllers: [AuthController, MeController, GoalsController, AdminController, HealthController],
+  controllers: [AuthController, MeController, AdminController, HealthController],
 
   providers: [
     // ── Casos de uso ────────────────────────────────────────────────────────
     RegisterUseCase,
     LoginUseCase,
-    GoalsService,
+    UpdateBalanceUseCase,
     AdminLoginUseCase,
-    ChangeAdminPasswordUseCase,
     CustomerQueryService,
     ExcelExportService,
+
+    // ── Sincronización con la hoja de cálculo ──────────────────────────────
+    { provide: SPREADSHEET_SYNC, useClass: GoogleSheetsAdapter },
+    OutboxWorker,
 
     /**
      * Guards globales. El ORDEN importa: el throttler va primero para que

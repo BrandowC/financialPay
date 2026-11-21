@@ -1,7 +1,8 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../../shared/infrastructure/persistence/prisma.service';
 import { Public } from '../../shared/infrastructure/http/auth.guard';
+import { SPREADSHEET_SYNC, SpreadsheetSync } from '../sync/application/ports/spreadsheet.port';
 
 /**
  * Sondas de salud.
@@ -23,6 +24,7 @@ import { Public } from '../../shared/infrastructure/http/auth.guard';
  *                   reincorpora sola.
  *
  *   /health       — informe completo para monitorización y para el panel.
+ *                   Incluye el estado de la sincronización con la hoja.
  */
 @ApiTags('Salud')
 @Controller('health')
@@ -30,7 +32,10 @@ import { Public } from '../../shared/infrastructure/http/auth.guard';
 export class HealthController {
   private readonly startedAt = Date.now();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(SPREADSHEET_SYNC) private readonly sheets: SpreadsheetSync,
+  ) {}
 
   @Get('live')
   @ApiOperation({ summary: 'Sonda de vida (no toca la base de datos)' })
@@ -49,17 +54,57 @@ export class HealthController {
     };
   }
 
+  /**
+   * Informe completo.
+   *
+   * La cola de sincronización se reporta pero NO tumba el estado general: si
+   * Google Sheets está caído, la API sigue siendo perfectamente utilizable —
+   * los registros se guardan y los eventos esperan en el outbox. Marcarlo como
+   * "unhealthy" haría que el balanceador sacara instancias sanas de servicio
+   * por un problema de un sistema de terceros que no es crítico.
+   */
   @Get()
   @ApiOperation({ summary: 'Informe completo de estado' })
   async full() {
-    const databaseUp = await this.prisma.isHealthy();
+    const [databaseUp, sheetsUp, queue] = await Promise.all([
+      this.prisma.isHealthy(),
+      this.sheets.isAvailable().catch(() => false),
+      this.queueStats().catch(() => null),
+    ]);
 
     return {
       status: databaseUp ? 'ok' : 'unhealthy',
       version: process.env.npm_package_version ?? '1.0.0',
       uptime: Math.floor((Date.now() - this.startedAt) / 1000),
       timestamp: new Date().toISOString(),
-      checks: { database: databaseUp ? 'up' : 'down' },
+      checks: {
+        database: databaseUp ? 'up' : 'down',
+        // 'disabled' no es un fallo: es una configuración válida.
+        spreadsheet: sheetsUp ? 'up' : 'down_or_disabled',
+      },
+      sync: queue,
+    };
+  }
+
+  private async queueStats() {
+    const [row] = await this.prisma.$queryRaw<
+      { pending: bigint; failed: bigint; dead: bigint; oldest_pending: Date | null }[]
+    >`
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'PENDING')            AS pending,
+        COUNT(*) FILTER (WHERE status = 'FAILED')             AS failed,
+        COUNT(*) FILTER (WHERE status = 'DEAD')               AS dead,
+        MIN(created_at) FILTER (WHERE status IN ('PENDING','FAILED')) AS oldest_pending
+      FROM outbox_events
+    `;
+
+    return {
+      pending: Number(row.pending),
+      failed: Number(row.failed),
+      // Si esto sube de 0, hay que mirarlo a mano: son eventos que agotaron
+      // todos sus reintentos.
+      dead: Number(row.dead),
+      oldestPendingAt: row.oldest_pending?.toISOString() ?? null,
     };
   }
 }

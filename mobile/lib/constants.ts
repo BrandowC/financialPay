@@ -31,5 +31,7 @@ export function isAtLeastMinAge(day: number, month: number, year: number, now = 
   return age >= MIN_AGE;
 }
 
-/** Política de privacidad pública (la sirve la propia API, ver api/public/privacy.html). */
-export const PRIVACY_URL = "https://amcuenta-api-phi2.onrender.com/privacy";
+// Solo USA — el formulario está restringido a Estados Unidos
+export const US_FLAG = '🇺🇸';
+export const US_DIAL_CODE = '+1';
+export const US_PHONE_DIGITS = 10;

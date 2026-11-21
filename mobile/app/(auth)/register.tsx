@@ -17,11 +17,16 @@ import { Select, type SelectOption } from '@/components/Select';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
-import { CountryPicker } from '@/components/CountryPicker';
+import { UsFlag } from '@/components/ui/UsFlag';
 
 const LOGO = require('../../assets/images/Logo.png');
-import { isAtLeastMinAge, YEARS, daysInMonth } from '@/lib/constants';
-import { guessDefaultCountry, type Country } from '@/lib/countries';
+import {
+  isAtLeastMinAge,
+  YEARS,
+  daysInMonth,
+  US_DIAL_CODE,
+  US_PHONE_DIGITS,
+} from '@/lib/constants';
 import { useAuth } from '@/lib/auth';
 import { messageFor } from '@/lib/error-messages';
 import { useLanguage, useT } from '@/lib/i18n';
@@ -44,10 +49,6 @@ function pad2(n: number | string) {
 
 type Errors = Partial<Record<'fullName' | 'date' | 'phone' | 'email' | 'password' | 'general', string>>;
 
-/** Mínimo de dígitos del número nacional (igual que la API y la base de datos). */
-const MIN_PHONE_DIGITS = 7;
-const MAX_PHONE_DIGITS = 14;
-
 export default function RegisterScreen() {
   const router = useRouter();
   const t = useT();
@@ -58,7 +59,6 @@ export default function RegisterScreen() {
   const [day, setDay] = useState<string | null>(null);
   const [month, setMonth] = useState<string | null>(null);
   const [year, setYear] = useState<string | null>(null);
-  const [country, setCountry] = useState<Country>(() => guessDefaultCountry());
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -100,7 +100,7 @@ export default function RegisterScreen() {
 
     const phoneDigits = phone.replace(/\D/g, '');
     if (!phoneDigits) newErrors.phone = t('errEnterPhone');
-    else if (phoneDigits.length < MIN_PHONE_DIGITS) newErrors.phone = t('errInvalidPhone');
+    else if (phoneDigits.length !== US_PHONE_DIGITS) newErrors.phone = t('errInvalidUsPhone');
 
     if (!email.trim()) newErrors.email = t('errEnterEmail');
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) newErrors.email = t('errInvalidEmail');
@@ -122,13 +122,11 @@ export default function RegisterScreen() {
         email: email.trim(),
         password,
         birthDate,
-        countryCode: country.iso,
-        phoneCountryCode: country.dial,
         phone: phoneDigits,
       });
-      router.replace('/(app)/home');
+      router.replace('/(app)/account');
     } catch (err) {
-      console.warn('[Metas] register error:', err);
+      console.warn('[AMCuenta] register error:', err);
       setErrors({ general: messageFor(err, t) });
     }
   }
@@ -141,7 +139,7 @@ export default function RegisterScreen() {
             <View style={styles.brandRow}>
               <Image source={LOGO} style={styles.brandLogo} resizeMode="contain" />
               <View>
-                <Text style={styles.brandTitle}>Metas</Text>
+                <Text style={styles.brandTitle}>AM Cuenta</Text>
                 <Text style={styles.brandTagline}>{t('brandTagline')}</Text>
               </View>
             </View>
@@ -233,24 +231,20 @@ export default function RegisterScreen() {
 
             <Animated.View entering={FadeInDown.delay(200).duration(500)}>
               <View style={styles.field}>
-                <Text style={styles.label}>{t('countryLabel')}</Text>
-                <CountryPicker value={country} onChange={setCountry} />
-              </View>
-
-              <View style={styles.field}>
                 <Text style={styles.label}>{t('phoneLabel')}</Text>
                 <View style={styles.row}>
-                  <View style={styles.dialBox}>
-                    <Text style={styles.dialText}>{country.dial}</Text>
+                  <View style={styles.fixedCountry}>
+                    <UsFlag />
+                    <Text style={styles.fixedCountryText}>{US_DIAL_CODE}</Text>
                   </View>
                   <View style={styles.phoneFieldWrap}>
                     <TextField
                       placeholder={t('phonePlaceholder')}
                       keyboardType="phone-pad"
-                      maxLength={MAX_PHONE_DIGITS}
+                      maxLength={US_PHONE_DIGITS}
                       value={phone}
                       onChangeText={(v) => {
-                        setPhone(v.replace(/[^\d]/g, '').slice(0, MAX_PHONE_DIGITS));
+                        setPhone(v.replace(/[^\d]/g, '').slice(0, US_PHONE_DIGITS));
                         clearError('phone');
                       }}
                     />
@@ -367,7 +361,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
   cell: { flex: 1, minHeight: 52 },
   cellWide: { flex: 1.5, minHeight: 52 },
-  dialBox: {
+  fixedCountry: {
     width: 74,
     minHeight: 52,
     flexDirection: 'row',
@@ -379,7 +373,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.glassBorder,
   },
-  dialText: { color: colors.white, fontSize: 15, fontWeight: '600' },
+  fixedCountryText: { color: colors.white, fontSize: 15, fontWeight: '600' },
   phoneFieldWrap: { flex: 1 },
   errorText: { color: '#FFB3B3', fontSize: 13, marginTop: 6, marginLeft: 4 },
   hintText: { color: colors.textOnDarkFaint, fontSize: 12, marginTop: 6, marginLeft: 4 },

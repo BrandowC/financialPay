@@ -1,18 +1,15 @@
 {
   "expo": {
-    "name": "Metas",
+    "name": "AM Cuenta",
     "slug": "am-financial",
-    "version": "2.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "metas",
+    "scheme": "amfinancial",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.amfinancial.app",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "bundleIdentifier": "com.amfinancial.app"
     },
     "android": {
       "package": "com.amfinancial.app",
@@ -56,9 +53,8 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "1e9d3109-e133-4f6a-83e9-02270734a634"
+        "projectId": "c24c8d87-9cf5-411f-9f11-684c6f855295"
       }
-    },
-    "owner": "gregorioaz"
+    }
   }
 }

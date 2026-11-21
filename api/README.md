@@ -31,5 +31,5 @@ npm run test:e2e     # requiere Postgres de pruebas — ver test/setup-e2e.ts
 - Login por nombre ya no bloquea a homónimos ni permite enumerar correos (antes se hacía con una función de Postgres expuesta al rol `anon`).
 - El saldo se edita con bloqueo optimista (columna `version`): dos administradores nunca pueden pisarse un cambio en silencio.
 - Cada cambio de saldo lo audita un TRIGGER de Postgres, no la aplicación — es imposible saltárselo.
-- Cada registro queda además en `registration_ledger`, un registro permanente e inmutable: sobrevive aunque el cliente elimine su cuenta, y se descarga en Excel desde el panel en cualquier momento.
+- Cada registro y cada cambio de saldo se sincronizan a Google Sheets vía un patrón outbox: si Google está caído, nada se pierde, se reintenta con backoff.
 - Contraseñas con Argon2id, JWT de acceso corto + refresh rotativo con detección de reuso, rate limiting por endpoint.

@@ -5,6 +5,8 @@ import { PASSWORD_HASHER } from '../modules/auth/application/ports/password-hash
 import { TOKEN_SERVICE } from '../modules/auth/application/ports/token.port';
 import { Argon2PasswordHasher } from '../modules/auth/infrastructure/argon2-password-hasher';
 import { JwtTokenService } from '../modules/auth/infrastructure/jwt-token.service';
+import { BALANCE_REPOSITORY } from '../modules/balances/application/ports/balance.repository';
+import { PrismaBalanceRepository } from '../modules/balances/infrastructure/prisma-balance.repository';
 import { CUSTOMER_REPOSITORY } from '../modules/customers/application/ports/customer.repository';
 import { PrismaCustomerRepository } from '../modules/customers/infrastructure/prisma-customer.repository';
 import { PrismaService } from './infrastructure/persistence/prisma.service';
@@ -51,6 +53,7 @@ import { SecurityEventRecorder } from './infrastructure/security/security-event.
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasher },
     { provide: TOKEN_SERVICE, useClass: JwtTokenService },
     { provide: CUSTOMER_REPOSITORY, useClass: PrismaCustomerRepository },
+    { provide: BALANCE_REPOSITORY, useClass: PrismaBalanceRepository },
   ],
   exports: [
     PrismaService,
@@ -58,6 +61,7 @@ import { SecurityEventRecorder } from './infrastructure/security/security-event.
     PASSWORD_HASHER,
     TOKEN_SERVICE,
     CUSTOMER_REPOSITORY,
+    BALANCE_REPOSITORY,
     JwtModule,
   ],
 })

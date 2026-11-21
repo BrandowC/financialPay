@@ -4,7 +4,7 @@ import { BirthDate } from '../../../../shared/domain/value-objects/birth-date.vo
 import { Email } from '../../../../shared/domain/value-objects/email.vo';
 import { FullName } from '../../../../shared/domain/value-objects/full-name.vo';
 import { PlainPassword } from '../../../../shared/domain/value-objects/password.vo';
-import { PhoneNumber } from '../../../../shared/domain/value-objects/phone-number.vo';
+import { UsPhoneNumber } from '../../../../shared/domain/value-objects/phone-number.vo';
 import { SecurityEventRecorder } from '../../../../shared/infrastructure/security/security-event.recorder';
 import {
   CUSTOMER_REPOSITORY,
@@ -19,11 +19,6 @@ export interface RegisterCommand {
   email: string;
   password: string;
   birthDate: string;
-  /** País de residencia, ISO 3166-1 alfa-2 ("CO"). */
-  countryCode: string;
-  /** Prefijo telefónico ("+57"). */
-  phoneCountryCode: string;
-  /** Celular sin prefijo. */
   phone: string;
   ip?: string | null;
   userAgent?: string | null;
@@ -43,7 +38,8 @@ export interface RegisterResult {
  *      datos sean inválidos: no existe forma de crear un `Email` inválido.
  *   2. Se comprueba que el correo esté libre (para dar un mensaje claro).
  *   3. Se hashea la contraseña — lo más caro, ~50 ms.
- *   4. El repositorio escribe usuario + perfil en UNA transacción.
+ *   4. El repositorio escribe usuario + perfil + saldo + evento de outbox en
+ *      UNA transacción.
  *   5. Se emiten los tokens y el usuario entra directo, sin volver a login.
  *
  * ── La carrera del paso 2 ───────────────────────────────────────────────────
@@ -76,8 +72,7 @@ export class RegisterUseCase {
     const fullName = FullName.create(command.fullName);
     const password = PlainPassword.create(command.password);
     const birthDate = BirthDate.create(command.birthDate);
-    const phone = PhoneNumber.create(command.phoneCountryCode, command.phone);
-    const countryCode = command.countryCode.toUpperCase();
+    const phone = UsPhoneNumber.create(command.phone);
 
     // ── 2. Mensaje amable si el correo ya está tomado ─────────────────────
     if (await this.customers.emailExists(email)) {
@@ -106,7 +101,6 @@ export class RegisterUseCase {
         fullName,
         birthDate,
         phone,
-        countryCode,
       });
     } catch (error) {
       // La carrera del paso 2, atrapada por el índice único de Postgres.

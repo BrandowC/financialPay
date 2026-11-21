@@ -7,29 +7,14 @@
  * debe fiarse de sus propias sumas para nada que importe.
  */
 
-/** Centavos (texto) → "$1,234.56" / "COP 2.500.000,00" según la moneda. Solo para
- *  mostrar: no se hace aritmética con esto. */
-export function formatCents(cents: string, currency = 'USD'): string {
-  const value = Number(cents) / 100;
-  try {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return `${value.toFixed(2)} ${currency}`;
-  }
-}
-
-/** "CO" → "Colombia" (en español); el código tal cual si el navegador no lo sabe. */
-export function countryName(code: string | null): string {
-  if (!code) return '—';
-  try {
-    return new Intl.DisplayNames(['es'], { type: 'region' }).of(code) ?? code;
-  } catch {
-    return code;
-  }
+export function formatMoney(decimal: string, currency = 'USD'): string {
+  const value = Number(decimal);
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
 export function formatDate(iso: string | null): string {
@@ -51,9 +36,9 @@ export function formatDateShort(iso: string | null): string {
 }
 
 /**
- * "hace 3 minutos", "hace 2 horas"... Le da vida al panel: ver un registro
- * de "hace 12 segundos" transmite que el sistema está vivo, mucho más que una
- * fecha estática.
+ * "hace 3 minutos", "hace 2 horas"... Le da vida al panel: ver un saldo que
+ * cambió "hace 12 segundos" transmite que el sistema está vivo, mucho más que
+ * una fecha estática.
  */
 export function timeAgo(iso: string | null): string {
   if (!iso) return 'nunca';
@@ -84,4 +69,15 @@ export function initialsOf(fullName: string): string {
     .slice(0, 2)
     .map((p) => p[0]!.toUpperCase())
     .join('');
+}
+
+/**
+ * Convierte lo que el administrador escribió en el input a una forma que la
+ * API pueda validar. Se deja que el DTO del servidor sea la fuente final de
+ * verdad (acepta hasta 2 decimales, sin negativos); aquí solo se recorta lo
+ * evidentemente inválido para que el mensaje de error, si lo hay, sea del
+ * dominio y no un NaN de JavaScript.
+ */
+export function sanitizeAmountInput(raw: string): string {
+  return raw.replace(/[^\d.]/g, '');
 }

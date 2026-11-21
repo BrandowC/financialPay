@@ -11,17 +11,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type Language = "es" | "en";
 
-const STORAGE_KEY = "metas.language";
+const STORAGE_KEY = "amfinancial.language";
 
 const translations = {
   es: {
     // Branding
-    brandTagline: "Ahorro por metas",
-    appSubtitle: "Junta para lo que de verdad importa",
-    welcomeMessage: "Define tu meta, registra cada aporte\ny mira cómo creces.",
-    welcomeHighlight1: "Barra de progreso",
-    welcomeHighlight2: "Historial de aportes",
-    welcomeHighlight3: "Tus datos, solo tuyos",
+    brandTagline: "Solutions & Services",
+    appSubtitle: "Tu cuenta, siempre contigo",
+    welcomeMessage: "Maneja tu dinero de forma simple,\nrápida y segura.",
+    welcomeHighlight1: "Acceso protegido",
+    welcomeHighlight2: "Datos cifrados",
+    welcomeHighlight3: "Soporte dedicado",
 
     // Welcome
     start: "Comenzar",
@@ -49,10 +49,7 @@ const translations = {
     day: "Día",
     month: "Mes",
     year: "Año",
-    countryLabel: "País",
-    searchCountry: "Buscar país",
-    noCountryResults: "No encontramos ese país",
-    phoneLabel: "Celular",
+    phoneLabel: "Celular (Estados Unidos)",
     phonePlaceholder: "3015551234",
     email: "Correo electrónico",
     emailPlaceholder: "tu@correo.com",
@@ -65,95 +62,25 @@ const translations = {
     passwordStrengthGood: "Buena",
     passwordStrengthStrong: "Fuerte",
 
-    // Inicio
+    // Account
     hello: "Hola,",
-    totalSaved: "Total ahorrado",
-    totalSavedNone: "Aún no has ahorrado nada",
-    myGoals: "Mis metas",
-    goalsCount: "{n} metas",
-    goalsCountOne: "1 meta",
-    completedCount: "{n} cumplidas",
-    completedCountOne: "1 cumplida",
-    noGoalsTitle: "Crea tu primera meta",
-    noGoalsMsg:
-      "Un viaje, una moto, un fondo de emergencia. Ponle un nombre y un monto, y empieza a registrar lo que ahorras.",
-    newGoal: "Nueva meta",
-    archivedGoals: "Archivadas",
-    saved: "Ahorrado",
-    of: "de",
-    remaining: "Te faltan",
-    goalReached: "¡Meta cumplida!",
+    accountLabel: "Cuenta",
+    availableBalance: "Saldo disponible",
+    balanceUpdated: "Actualizado",
+    balanceNeverUpdated: "Aún sin movimientos",
+    balanceDisclaimer: "",
     pullToRefresh: "Desliza hacia abajo para actualizar",
     refreshing: "Actualizando…",
-    loadErrorTitle: "No pudimos cargar tus metas",
-    loadErrorMsg: "Revisa tu conexión e intenta de nuevo.",
-    retry: "Reintentar",
-
-    // Formulario de meta
-    goalFormNewTitle: "Nueva meta",
-    goalFormEditTitle: "Editar meta",
-    goalName: "¿Para qué estás ahorrando?",
-    goalNamePlaceholder: "Viaje a Cartagena",
-    goalIcon: "Ícono",
-    goalTarget: "¿Cuánto quieres juntar?",
-    goalTargetPlaceholder: "2.500.000",
-    goalCurrency: "Moneda",
-    goalCurrencyLocked: "La moneda no se puede cambiar una vez creada la meta.",
-    goalDeadline: "Fecha límite (opcional)",
-    deadlineNone: "Sin fecha",
-    deadline3m: "3 meses",
-    deadline6m: "6 meses",
-    deadline1y: "1 año",
-    deadline2y: "2 años",
-    deadlineKeep: "La actual",
-    saveGoal: "Guardar meta",
-    saveChanges: "Guardar cambios",
-    saving: "Guardando…",
-    cancel: "Cancelar",
-    errGoalName: "Ponle un nombre a tu meta.",
-    errAmount: "Escribe un monto válido, mayor que cero.",
-
-    // Detalle de meta
-    contribute: "Aportar",
-    withdraw: "Retirar",
-    history: "Historial",
-    noHistory: "Todavía no hay movimientos. Registra tu primer aporte.",
-    deposit: "Aporte",
-    withdrawal: "Retiro",
-    amount: "Monto",
-    note: "Nota (opcional)",
-    notePlaceholder: "Ej. prima de diciembre",
-    addDeposit: "Registrar aporte",
-    addWithdrawal: "Registrar retiro",
-    deleteMovement: "Borrar movimiento",
-    deleteMovementMsg: "¿Borrar este movimiento? El total ahorrado se recalcula.",
-    editGoal: "Editar meta",
-    archiveGoal: "Archivar meta",
-    unarchiveGoal: "Reactivar meta",
-    deleteGoal: "Eliminar meta",
-    deleteGoalTitle: "Eliminar meta",
-    deleteGoalMsg: "Se borrará la meta y todo su historial. No se puede deshacer.",
-    deleteConfirm: "Sí, eliminar",
-    daysLeft: "Faltan {n} días",
-    dayLeft: "Falta 1 día",
-    dueToday: "Vence hoy",
-    daysOverdue: "Venció hace {n} días",
-    perMonthHint: "Para llegar a tiempo: {amount} por mes",
-
-    // Perfil
-    profile: "Perfil",
-    country: "País",
-    memberSince: "En Metas desde",
+    memberSince: "Cliente desde",
     signOut: "Cerrar sesión",
-    privacyPolicy: "Política de privacidad",
     deleteAccount: "Eliminar mi cuenta",
     deleteAccountTitle: "Eliminar cuenta",
     deleteAccountMsg:
-      "¿Estás seguro? Esta acción es permanente y eliminará todos tus datos, metas y aportes. No podrás recuperarlos.",
+      "¿Estás seguro? Esta acción es permanente y eliminará todos tus datos. No podrás recuperarlos.",
     deleteAccountConfirm: "Sí, eliminar",
     deleteAccountCancel: "Cancelar",
     deleteAccountError: "No pudimos eliminar la cuenta. Intenta de nuevo.",
-    back: "Atrás",
+    copyAccountNumber: "Número copiado",
 
     // Errores de validación local (antes de enviar al servidor)
     errCompleteFields: "Completa los campos marcados en rojo.",
@@ -163,8 +90,7 @@ const translations = {
     errInvalidEmail: "Correo no válido.",
     errEnterDate: "Completa día, mes y año.",
     errEnterPhone: "Escribe tu número de celular.",
-    errInvalidPhone: "Escribe un número válido (mínimo 7 dígitos).",
-    errChooseCountry: "Elige tu país.",
+    errInvalidUsPhone: "Solo aceptamos números de Estados Unidos (10 dígitos).",
     errPasswordMin: "Mínimo 8 caracteres.",
     errUnderage: "Debes ser mayor de 18 años para crear una cuenta.",
 
@@ -173,7 +99,7 @@ const translations = {
       "Los datos no coinciden. Revisa tu nombre o correo y tu contraseña.",
     errSignIn:
       "Los datos no coinciden. Revisa tu nombre o correo y tu contraseña.",
-    errAccountSuspended: "Tu cuenta está suspendida. Escríbenos para ayudarte.",
+    errAccountSuspended: "Tu cuenta está suspendida. Comunícate con soporte.",
     errAccountLocked:
       "Demasiados intentos fallidos. Espera unos minutos antes de volver a intentar.",
     errRateLimited:
@@ -187,14 +113,20 @@ const translations = {
       "Esa contraseña es demasiado común. Elige una diferente.",
     errPasswordRepetitive:
       "La contraseña es demasiado repetitiva. Usa más caracteres distintos.",
-    errPhoneRepeated: "Ese número no parece real. Escribe tu número verdadero.",
+    errPhoneReserved: "Ese número parece de prueba. Escribe tu número real.",
+    errPhoneServiceCode: "Ese código de área no corresponde a un celular.",
     errSessionExpired: "Tu sesión expiró. Inicia sesión de nuevo.",
-    errWithdrawTooMuch: "No puedes retirar más de lo que has ahorrado en esta meta.",
-    errGoalsLimit: "Llegaste al máximo de metas. Archiva o elimina alguna para crear otra.",
-    errGoalNotFound: "Esa meta ya no existe.",
-    errAmountTooLarge: "Ese monto es demasiado grande.",
-    errMovementNeeded:
-      "No puedes borrar este aporte porque hay retiros que dependen de él. Borra primero esos retiros.",
+
+    // Cuenta creada
+    accountCreatedTitle: "¡Cuenta creada!",
+    accountCreatedMsg:
+      "Revisa tu correo para confirmar la cuenta y luego inicia sesión.",
+
+    // Error de perfil
+    profileErrorTitle: "No pudimos cargar tu perfil",
+    profileErrorMsg:
+      "Cierra sesión e intenta entrar de nuevo. Si el problema continúa, avísale al administrador.",
+    retry: "Reintentar",
 
     // Selector de idioma
     languageLabel: "Idioma",
@@ -204,12 +136,12 @@ const translations = {
 
   en: {
     // Branding
-    brandTagline: "Savings goals",
-    appSubtitle: "Save for what really matters",
-    welcomeMessage: "Set your goal, log every deposit\nand watch yourself grow.",
-    welcomeHighlight1: "Progress bar",
-    welcomeHighlight2: "Deposit history",
-    welcomeHighlight3: "Your data, only yours",
+    brandTagline: "Solutions & Services",
+    appSubtitle: "Your account, always with you",
+    welcomeMessage: "Manage your money simply,\nquickly and securely.",
+    welcomeHighlight1: "Protected access",
+    welcomeHighlight2: "Encrypted data",
+    welcomeHighlight3: "Dedicated support",
 
     // Welcome
     start: "Get started",
@@ -237,10 +169,7 @@ const translations = {
     day: "Day",
     month: "Month",
     year: "Year",
-    countryLabel: "Country",
-    searchCountry: "Search country",
-    noCountryResults: "We couldn't find that country",
-    phoneLabel: "Phone",
+    phoneLabel: "Phone (United States)",
     phonePlaceholder: "3015551234",
     email: "Email",
     emailPlaceholder: "you@email.com",
@@ -253,95 +182,25 @@ const translations = {
     passwordStrengthGood: "Good",
     passwordStrengthStrong: "Strong",
 
-    // Home
+    // Account
     hello: "Hello,",
-    totalSaved: "Total saved",
-    totalSavedNone: "You haven't saved anything yet",
-    myGoals: "My goals",
-    goalsCount: "{n} goals",
-    goalsCountOne: "1 goal",
-    completedCount: "{n} completed",
-    completedCountOne: "1 completed",
-    noGoalsTitle: "Create your first goal",
-    noGoalsMsg:
-      "A trip, a motorbike, an emergency fund. Give it a name and an amount, and start logging what you save.",
-    newGoal: "New goal",
-    archivedGoals: "Archived",
-    saved: "Saved",
-    of: "of",
-    remaining: "Remaining",
-    goalReached: "Goal reached!",
+    accountLabel: "Account",
+    availableBalance: "Available balance",
+    balanceUpdated: "Updated",
+    balanceNeverUpdated: "No activity yet",
+    balanceDisclaimer: "",
     pullToRefresh: "Pull down to refresh",
     refreshing: "Refreshing…",
-    loadErrorTitle: "We couldn't load your goals",
-    loadErrorMsg: "Check your connection and try again.",
-    retry: "Retry",
-
-    // Goal form
-    goalFormNewTitle: "New goal",
-    goalFormEditTitle: "Edit goal",
-    goalName: "What are you saving for?",
-    goalNamePlaceholder: "Trip to Cartagena",
-    goalIcon: "Icon",
-    goalTarget: "How much do you want to save?",
-    goalTargetPlaceholder: "2,500",
-    goalCurrency: "Currency",
-    goalCurrencyLocked: "The currency can't be changed once the goal is created.",
-    goalDeadline: "Deadline (optional)",
-    deadlineNone: "No date",
-    deadline3m: "3 months",
-    deadline6m: "6 months",
-    deadline1y: "1 year",
-    deadline2y: "2 years",
-    deadlineKeep: "Current",
-    saveGoal: "Save goal",
-    saveChanges: "Save changes",
-    saving: "Saving…",
-    cancel: "Cancel",
-    errGoalName: "Give your goal a name.",
-    errAmount: "Enter a valid amount greater than zero.",
-
-    // Goal detail
-    contribute: "Add money",
-    withdraw: "Withdraw",
-    history: "History",
-    noHistory: "No activity yet. Log your first deposit.",
-    deposit: "Deposit",
-    withdrawal: "Withdrawal",
-    amount: "Amount",
-    note: "Note (optional)",
-    notePlaceholder: "e.g. December bonus",
-    addDeposit: "Log deposit",
-    addWithdrawal: "Log withdrawal",
-    deleteMovement: "Delete entry",
-    deleteMovementMsg: "Delete this entry? The total saved will be recalculated.",
-    editGoal: "Edit goal",
-    archiveGoal: "Archive goal",
-    unarchiveGoal: "Reactivate goal",
-    deleteGoal: "Delete goal",
-    deleteGoalTitle: "Delete goal",
-    deleteGoalMsg: "The goal and all of its history will be deleted. This can't be undone.",
-    deleteConfirm: "Yes, delete",
-    daysLeft: "{n} days left",
-    dayLeft: "1 day left",
-    dueToday: "Due today",
-    daysOverdue: "Overdue by {n} days",
-    perMonthHint: "To get there on time: {amount} per month",
-
-    // Profile
-    profile: "Profile",
-    country: "Country",
-    memberSince: "On Metas since",
+    memberSince: "Customer since",
     signOut: "Sign out",
-    privacyPolicy: "Privacy policy",
     deleteAccount: "Delete my account",
     deleteAccountTitle: "Delete account",
     deleteAccountMsg:
-      "Are you sure? This action is permanent and will delete all your data, goals and deposits. You will not be able to recover them.",
+      "Are you sure? This action is permanent and will delete all your data. You will not be able to recover it.",
     deleteAccountConfirm: "Yes, delete",
     deleteAccountCancel: "Cancel",
     deleteAccountError: "We could not delete the account. Try again.",
-    back: "Back",
+    copyAccountNumber: "Number copied",
 
     // Local validation errors
     errCompleteFields: "Fill in the fields marked in red.",
@@ -351,8 +210,7 @@ const translations = {
     errInvalidEmail: "Invalid email.",
     errEnterDate: "Complete day, month, and year.",
     errEnterPhone: "Enter your phone number.",
-    errInvalidPhone: "Enter a valid number (at least 7 digits).",
-    errChooseCountry: "Choose your country.",
+    errInvalidUsPhone: "We only accept US phone numbers (10 digits).",
     errPasswordMin: "Minimum 8 characters.",
     errUnderage: "You must be 18 or older to create an account.",
 
@@ -361,7 +219,7 @@ const translations = {
       "The details don't match. Check your name or email and your password.",
     errSignIn:
       "The details don't match. Check your name or email and your password.",
-    errAccountSuspended: "Your account is suspended. Write to us and we'll help.",
+    errAccountSuspended: "Your account is suspended. Contact support.",
     errAccountLocked:
       "Too many failed attempts. Wait a few minutes before trying again.",
     errRateLimited: "Too many attempts. Wait a moment and try again.",
@@ -374,14 +232,21 @@ const translations = {
       "That password is too common. Choose a different one.",
     errPasswordRepetitive:
       "The password is too repetitive. Use more distinct characters.",
-    errPhoneRepeated: "That number doesn't look real. Enter your actual number.",
+    errPhoneReserved:
+      "That number looks like a test number. Enter your real number.",
+    errPhoneServiceCode: "That area code isn't a real mobile number.",
     errSessionExpired: "Your session expired. Sign in again.",
-    errWithdrawTooMuch: "You can't withdraw more than you've saved in this goal.",
-    errGoalsLimit: "You've reached the goal limit. Archive or delete one to create another.",
-    errGoalNotFound: "That goal no longer exists.",
-    errAmountTooLarge: "That amount is too large.",
-    errMovementNeeded:
-      "You can't delete this deposit because withdrawals depend on it. Delete those withdrawals first.",
+
+    // Account created
+    accountCreatedTitle: "Account created!",
+    accountCreatedMsg:
+      "Check your email to confirm your account and then sign in.",
+
+    // Profile error
+    profileErrorTitle: "We couldn't load your profile",
+    profileErrorMsg:
+      "Sign out and try again. If the problem persists, contact the administrator.",
+    retry: "Retry",
 
     // Language toggle
     languageLabel: "Language",
@@ -392,13 +257,11 @@ const translations = {
 
 export type TranslationKey = keyof (typeof translations)["es"];
 
-type TranslateVars = Record<string, string | number>;
-
 type LanguageContextValue = {
   language: Language;
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
-  t: (key: TranslationKey, vars?: TranslateVars) => string;
+  t: (key: TranslationKey) => string;
 };
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(
@@ -425,17 +288,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLanguage(language === "es" ? "en" : "es");
   }, [language, setLanguage]);
 
-  // `{n}`, `{amount}`… se reemplazan con las variables recibidas.
   const t = useCallback(
-    (key: TranslationKey, vars?: TranslateVars) => {
-      let text: string = translations[language][key];
-      if (vars) {
-        for (const [name, value] of Object.entries(vars)) {
-          text = text.replace(`{${name}}`, String(value));
-        }
-      }
-      return text;
-    },
+    (key: TranslationKey) => translations[language][key],
     [language],
   );
 

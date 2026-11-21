@@ -56,9 +56,9 @@ export default function LoginScreen() {
 
     try {
       await login(identifier.trim(), password);
-      router.replace('/(app)/home');
+      router.replace('/(app)/account');
     } catch (err) {
-      console.warn('[Metas] login error:', err);
+      console.warn('[AMCuenta] login error:', err);
       setErrors({ general: messageFor(err, t) });
     }
   }

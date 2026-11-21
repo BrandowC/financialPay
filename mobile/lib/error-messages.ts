@@ -36,10 +36,10 @@ const CODE_TO_KEY: Partial<Record<string, TranslationKey>> = {
   NAME_INVALID_CHARACTERS: 'errEnterFullName',
 
   PHONE_REQUIRED: 'errEnterPhone',
-  PHONE_TOO_SHORT: 'errInvalidPhone',
-  PHONE_TOO_LONG: 'errInvalidPhone',
-  PHONE_INVALID_DIAL_CODE: 'errChooseCountry',
-  PHONE_INVALID: 'errPhoneRepeated',
+  PHONE_INVALID_LENGTH: 'errInvalidUsPhone',
+  PHONE_INVALID_AREA_CODE: 'errInvalidUsPhone',
+  PHONE_SERVICE_CODE: 'errPhoneServiceCode',
+  PHONE_RESERVED_FICTIONAL: 'errPhoneReserved',
 
   BIRTH_DATE_INVALID_FORMAT: 'errEnterDate',
   BIRTH_DATE_NOT_REAL: 'errEnterDate',
@@ -50,25 +50,10 @@ const CODE_TO_KEY: Partial<Record<string, TranslationKey>> = {
   SESSION_EXPIRED: 'errSessionExpired',
   ACCESS_TOKEN_EXPIRED: 'errSessionExpired',
   ACCESS_TOKEN_INVALID: 'errSessionExpired',
-
-  // Metas
-  GOAL_NAME_INVALID: 'errGoalName',
-  GOAL_NOT_FOUND: 'errGoalNotFound',
-  CONTRIBUTION_NOT_FOUND: 'errGoalNotFound',
-  GOALS_LIMIT_REACHED: 'errGoalsLimit',
-  AMOUNT_MUST_BE_POSITIVE: 'errAmount',
-  MONEY_INVALID_FORMAT: 'errAmount',
-  MONEY_EMPTY: 'errAmount',
-  MONEY_TOO_LARGE: 'errAmountTooLarge',
-  WITHDRAWAL_EXCEEDS_SAVED: 'errWithdrawTooMuch',
-  CONTRIBUTION_NEEDED_BY_WITHDRAWAL: 'errMovementNeeded',
 };
 
 /** Mensaje final a mostrar en pantalla para cualquier error atrapado. */
-export function messageFor(
-  error: unknown,
-  t: (key: TranslationKey, vars?: Record<string, string | number>) => string,
-): string {
+export function messageFor(error: unknown, t: (key: TranslationKey) => string): string {
   if (isNetworkError(error)) return t('errNetwork');
 
   if (error instanceof ApiError) {

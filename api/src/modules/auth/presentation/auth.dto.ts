@@ -1,6 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 /**
  * Los DTOs son la PRIMERA barrera: rechazan lo evidentemente malformado antes
@@ -41,19 +50,7 @@ export class RegisterDto {
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'birthDate debe tener el formato AAAA-MM-DD' })
   birthDate!: string;
 
-  @ApiProperty({ example: 'CO', description: 'País de residencia (ISO 3166-1 alfa-2)' })
-  @IsString()
-  @Matches(/^[A-Za-z]{2}$/, { message: 'countryCode debe ser un código de país de 2 letras' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
-  countryCode!: string;
-
-  @ApiProperty({ example: '+57', description: 'Prefijo telefónico del país' })
-  @IsString()
-  @Matches(/^\+\d{1,4}$/, { message: 'phoneCountryCode debe verse como +57' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  phoneCountryCode!: string;
-
-  @ApiProperty({ example: '3015551234', description: 'Celular sin el prefijo del país' })
+  @ApiProperty({ example: '3015551234', description: 'Celular de EE. UU., 10 dígitos' })
   @IsString()
   @IsNotEmpty({ message: 'phone es obligatorio' })
   @MaxLength(20)
@@ -86,3 +83,34 @@ export class RefreshDto {
   refreshToken!: string;
 }
 
+export class UpdateBalanceDto {
+  @ApiProperty({
+    example: '1500.75',
+    description:
+      'Monto como TEXTO decimal. Se envía como cadena y no como número a ' +
+      'propósito: un JSON con 1500.75 se convierte en un double y pierde ' +
+      'precisión en montos grandes.',
+  })
+  @IsString({ message: 'amount debe enviarse como texto, no como número' })
+  @Matches(/^\d{1,12}(\.\d{1,2})?$/, {
+    message: 'amount debe ser un número positivo con máximo 2 decimales (ej: 1500.75)',
+  })
+  amount!: string;
+
+  @ApiProperty({
+    example: 3,
+    description:
+      'Versión del saldo que el administrador tenía en pantalla. Si otro ' +
+      'administrador guardó primero, la API responde 409 en vez de pisar el cambio.',
+  })
+  @IsInt({ message: 'expectedVersion debe ser un entero' })
+  @Min(0)
+  expectedVersion!: number;
+
+  @ApiPropertyOptional({ example: 'Ajuste mensual autorizado', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  reason?: string;
+}

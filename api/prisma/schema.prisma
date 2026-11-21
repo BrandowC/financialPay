@@ -1,5 +1,5 @@
 // =============================================================================
-// Metas · Modelo de datos
+// AM Cuenta · Modelo de datos
 // =============================================================================
 // Este archivo es el ESPEJO tipado de las migraciones SQL que están en
 // prisma/migrations/. La fuente de verdad del DDL es el SQL (ahí viven los
@@ -47,6 +47,16 @@ enum PrincipalType {
   @@map("principal_type")
 }
 
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  DEAD
+
+  @@map("outbox_status")
+}
+
 // -----------------------------------------------------------------------------
 // Modelos
 // -----------------------------------------------------------------------------
@@ -69,8 +79,6 @@ model User {
   profile             Profile?
   balance             Balance?
   balanceAudits       BalanceAudit[]
-  goals               Goal[]
-  contributions       Contribution[]
 
   @@index([status])
   @@map("users")
@@ -87,8 +95,6 @@ model Profile {
   birthDate        DateTime @map("birth_date") @db.Date
   phoneCountryCode String   @default("+1") @map("phone_country_code")
   phoneNumber      String   @map("phone_number")
-  /// País de residencia (ISO 3166-1 alfa-2). Nulo en las cuentas anteriores a Metas.
-  countryCode      String?  @map("country_code") @db.Char(2)
   accountNumber    String   @unique @map("account_number")
 
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -99,52 +105,6 @@ model Profile {
   @@index([normalizedName])
   @@index([createdAt(sort: Desc)])
   @@map("profiles")
-}
-
-/// Una meta de ahorro de una persona ("Viaje", "Moto"...).
-model Goal {
-  id          String    @id @default(uuid()) @db.Uuid
-  userId      String    @map("user_id") @db.Uuid
-
-  name        String
-  emoji       String?
-
-  /// Centavos (BigInt a propósito, igual que el resto del dinero del sistema).
-  targetCents BigInt    @map("target_cents")
-  currency    String    @default("USD") @db.Char(3)
-
-  deadline    DateTime? @db.Date
-  archivedAt  DateTime? @map("archived_at") @db.Timestamptz(6)
-
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
-
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contributions Contribution[]
-
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("goals")
-}
-
-/// Un aporte (positivo) o retiro (negativo) de una meta. El total ahorrado es
-/// la suma de `amountCents`.
-model Contribution {
-  id          String   @id @default(uuid()) @db.Uuid
-  goalId      String   @map("goal_id") @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-
-  amountCents BigInt   @map("amount_cents")
-  note        String?
-  madeOn      DateTime @default(now()) @map("made_on") @db.Date
-
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  goal        Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([goalId, madeOn(sort: Desc), createdAt(sort: Desc)])
-  @@index([userId])
-  @@map("contributions")
 }
 
 model Balance {
@@ -240,6 +200,31 @@ model BalanceAudit {
   @@index([userId, createdAt(sort: Desc)])
   @@index([changedBy, createdAt(sort: Desc)])
   @@map("balance_audit")
+}
+
+model OutboxEvent {
+  id            BigInt       @id @default(autoincrement())
+
+  aggregateType String       @map("aggregate_type")
+  aggregateId   String       @map("aggregate_id") @db.Uuid
+  eventType     String       @map("event_type")
+  payload       Json
+
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0) @db.SmallInt
+  maxAttempts   Int          @default(12) @map("max_attempts") @db.SmallInt
+  lastError     String?      @map("last_error")
+
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+
+  lockedBy      String?      @map("locked_by")
+  lockedAt      DateTime?    @map("locked_at") @db.Timestamptz(6)
+
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  processedAt   DateTime?    @map("processed_at") @db.Timestamptz(6)
+
+  @@index([aggregateType, aggregateId])
+  @@map("outbox_events")
 }
 
 model SecurityEvent {

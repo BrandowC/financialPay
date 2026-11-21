@@ -39,7 +39,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@metas.app';
+  const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@amcuenta.com';
   const password = process.env.SEED_ADMIN_PASSWORD ?? 'CambiaEstaClaveYa2026';
   const fullName = process.env.SEED_ADMIN_NAME ?? 'Administrador General';
 
