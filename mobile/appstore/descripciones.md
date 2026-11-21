@@ -56,7 +56,7 @@ IMPORTANTE
 
 Metas es un cuaderno de ahorro personal. NO es un banco, NO guarda ni mueve dinero real, NO se conecta a cuentas bancarias ni tarjetas y NO ofrece préstamos ni inversiones. Los montos son anotaciones que tú mismo registras para llevar el control de tus metas.
 
-Política de privacidad: https://amcuenta-api.onrender.com/privacy
+Política de privacidad: https://amcuenta-api-phi2.onrender.com/privacy
 ```
 
 ## Palabras clave (máx. 100, separadas por coma, sin espacios)
@@ -68,7 +68,7 @@ ahorro,metas,ahorrar,objetivos,alcancia,presupuesto,dinero,finanzas personales,m
 
 ## URL de soporte y de privacidad
 
-- **URL de privacidad:** `https://amcuenta-api.onrender.com/privacy`
+- **URL de privacidad:** `https://amcuenta-api-phi2.onrender.com/privacy`
 - **URL de soporte:** la que ya tenías en la ficha (puede ser tu correo con `mailto:` o una página tuya).
 
 ## Categoría

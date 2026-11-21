@@ -48,7 +48,7 @@ Metas es un cuaderno de ahorro personal. NO es un banco, NO guarda ni mueve dine
 ## Categoría y etiquetas
 
 - **Categoría:** Finanzas (o Productividad).
-- **Política de privacidad:** `https://amcuenta-api.onrender.com/privacy`
+- **Política de privacidad:** `https://amcuenta-api-phi2.onrender.com/privacy`
 
 ## Declaración de funciones financieras
 
@@ -57,4 +57,4 @@ Play Console → Contenido de la app → **Funciones financieras**: elige **"Mi 
 ## Eliminación de cuenta (obligatorio)
 
 - Dentro de la app: **Perfil → Eliminar mi cuenta** (inmediato y definitivo).
-- URL pública para pedir la eliminación (campo de la ficha): la misma de la política, `https://amcuenta-api.onrender.com/privacy`, donde se explica el paso a paso.
+- URL pública para pedir la eliminación (campo de la ficha): la misma de la política, `https://amcuenta-api-phi2.onrender.com/privacy`, donde se explica el paso a paso.

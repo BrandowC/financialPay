@@ -10,7 +10,7 @@ La ficha ya existe. Es una **versión nueva**, no una app nueva.
 4. **Contenido de la app** (hay que actualizar cada formulario):
    - Seguridad de los datos: [`data-safety-respuestas.md`](data-safety-respuestas.md)
    - Clasificación de contenido: [`content-rating-respuestas.md`](content-rating-respuestas.md)
-   - Política de privacidad: `https://amcuenta-api.onrender.com/privacy`
+   - Política de privacidad: `https://amcuenta-api-phi2.onrender.com/privacy`
    - Funciones financieras: "ninguna" (ver `descripciones.md`)
 5. **Enviar a revisión.**
 

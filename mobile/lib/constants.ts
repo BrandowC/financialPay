@@ -32,4 +32,4 @@ export function isAtLeastMinAge(day: number, month: number, year: number, now = 
 }
 
 /** Política de privacidad pública (la sirve la propia API, ver api/public/privacy.html). */
-export const PRIVACY_URL = "https://amcuenta-api.onrender.com/privacy";
+export const PRIVACY_URL = "https://amcuenta-api-phi2.onrender.com/privacy";

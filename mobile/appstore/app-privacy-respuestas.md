@@ -4,7 +4,7 @@ App Store Connect → tu app → **App Privacy**.
 
 **¿Recopilas datos de esta app?** Sí.
 
-**URL de la política de privacidad:** `https://amcuenta-api.onrender.com/privacy`
+**URL de la política de privacidad:** `https://amcuenta-api-phi2.onrender.com/privacy`
 
 ## Tipos de datos a declarar
 

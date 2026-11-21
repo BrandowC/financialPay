@@ -12,11 +12,11 @@ La ficha ya existe (App Store Connect → AM Cuenta → se convierte en **Metas*
    - Capturas: carpeta [`graficos/`](graficos/) (`screenshot-*` de 1290×2796 y `-6.5in` de 1284×2778)
    - App Privacy: [`app-privacy-respuestas.md`](app-privacy-respuestas.md)
    - Clasificación por edad: [`age-rating-respuestas.md`](age-rating-respuestas.md)
-   - URL de privacidad: `https://amcuenta-api.onrender.com/privacy`
+   - URL de privacidad: `https://amcuenta-api-phi2.onrender.com/privacy`
 4. **Información de revisión:** marcar "Sign-in required", poner una cuenta de prueba **nueva** y pegar las notas de `descripciones.md`.
 5. **Enviar a revisión.** Apple suele tardar 1–3 días.
 
 ## Antes de enviar
 
-- Probar la app en el iPhone (TestFlight) contra `https://amcuenta-api.onrender.com`.
+- Probar la app en el iPhone (TestFlight) contra `https://amcuenta-api-phi2.onrender.com`.
 - Que el servicio de Render esté arriba (ver `render.yaml`: la base de datos de pago).
